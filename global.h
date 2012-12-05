@@ -9,22 +9,17 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MAXIDNUM 1024
+#define MAX_STACK_SIZE 1024
 
-#include "env.h"
+#define STACK_PUSH(s, top, item) s[top++] = item
+#define STACK_POP(s, top) s[--top]
+#define STACK_TOP(s, top) s[top - 1]
+
 #include "syntree.h"
-#include "stab.h"
 
-struct Env *curr_env;
-enum Type_kind lasttype;
 struct ID_node *lastid_list;
 int lastval;
 double lastdval;
-
-struct Stab *lastid_stack[MAXIDNUM];
-struct Stab *lastid_push(struct Stab *);
-struct Stab *lastid_top();
-struct Stab *lastid_pop();
 
 #endif /* !PARSER_GLOBAL_H */
 

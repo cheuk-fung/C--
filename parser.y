@@ -125,33 +125,33 @@ global		: var_def			{ $$ = $1; }
 		;
 
 identifier	: ID				{
-							lastid_top()->type = lasttype;
+							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
 						}
 		| MULTIPLY ID			{
 		/* pointer, does not support pointer to pointer */
-							lastid_top()->type = lasttype;
-							lastid_top()->ptrcount = 1;
-							lastid_top()->arysize = -1;
+							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->ptrcount = 1;
+							STACK_TOP(id_stack, id_top)->arysize = -1;
 						}
 		| ID LSBRAC INTEGER RSBRAC	{
 		/* one-dimensional array */
-							lastid_top()->type = lasttype;
-							lastid_top()->ptrcount = 1;	/* array is pointer essentially */
-							lastid_top()->arysize = lastval;
+							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->ptrcount = 1;	/* array is pointer essentially */
+							STACK_TOP(id_stack, id_top)->arysize = lastval;
 						}
 		| MULTIPLY ID LSBRAC INTEGER RSBRAC	{
 		/* one-dimensional array of pointer */	
-							lastid_top()->type = lasttype;
-							lastid_top()->ptrcount = 2;	/* array is pointer essentially */
-							lastid_top()->arysize = lastval;
+							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->ptrcount = 2;	/* array is pointer essentially */
+							STACK_TOP(id_stack, id_top)->arysize = lastval;
 						}
 		;
 
 idlist		: idlist COMMA identifier	{
-							id_insert_last(lastid_list, id_new_node(lastid_pop()));
+							id_insert_last(lastid_list, id_new_node(STACK_POP(id_stack, id_top)));
 						}
 		| identifier			{
-							lastid_list = id_new_node(lastid_pop());
+							lastid_list = id_new_node(STACK_POP(id_stack, id_top));
 						}
 		;
 
@@ -172,17 +172,17 @@ var_def_list	: var_def_list var_def		{
 
 func_head	: TYPE ID			{
 							$$ = syntree_new_node(2, K_FUNC);
-							lastid_top()->type = lasttype;
-							lastid_top()->isfunc = TRUE;
-							$$->id = lastid_pop();
+							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->isfunc = TRUE;
+							$$->id = STACK_POP(id_stack, id_top);
 						}
 		| TYPE MULTIPLY ID		{
 							$$ = syntree_new_node(2, K_FUNC);
-							lastid_top()->type = lasttype;
-							lastid_top()->isfunc = TRUE;
-							lastid_top()->ptrcount = 1;
-							lastid_top()->arysize = -1;
-							$$->id = lastid_pop();
+							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->isfunc = TRUE;
+							STACK_TOP(id_stack, id_top)->ptrcount = 1;
+							STACK_TOP(id_stack, id_top)->arysize = -1;
+							$$->id = STACK_POP(id_stack, id_top);
 						}
 		;
 
@@ -296,7 +296,7 @@ expr		: expr INC				{
 								$$->child[0] = $1;
 								$$->child[1] = syntree_new_node(0, K_EXPR);
 								$$->child[1]->expr = K_ID;
-								$$->child[1]->id = lastid_pop();
+								$$->child[1]->id = STACK_POP(id_stack, id_top);
 								$$->expr = K_OPR;
 								$$->token = DOT;
 							}
@@ -305,7 +305,7 @@ expr		: expr INC				{
 								$$->child[0] = $1;
 								$$->child[1] = syntree_new_node(0, K_EXPR);
 								$$->child[1]->expr = K_ID;
-								$$->child[1]->id = lastid_pop();
+								$$->child[1]->id = STACK_POP(id_stack, id_top);
 								$$->expr = K_OPR;
 								$$->token = MEMBER;
 							}
@@ -585,13 +585,13 @@ expr		: expr INC				{
 		/* TODO: add hash operation to check ID existence */
 								$$ = syntree_new_node(0, K_EXPR);
 								$$->expr = K_ID;
-								$$->id = lastid_pop();
+								$$->id = STACK_POP(id_stack, id_top);
 							}
 		| ID LSBRAC expr RSBRAC			{
 								$$ = syntree_new_node(1, K_EXPR);
 								$$->child[0] = $3;
 								$$->expr = K_ARY;
-								$$->id = lastid_pop();
+								$$->id = STACK_POP(id_stack, id_top);
 							}
 		| call_func				{ $$ = $1; }
 		/* TODO: COMMA, IFF */

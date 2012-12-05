@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -g -DDEBUG
+CFLAGS = -Wall -g -DNGDEBUG
 LIBS = -ly
 
 PRG = c--

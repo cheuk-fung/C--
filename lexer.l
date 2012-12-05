@@ -133,15 +133,15 @@ static int proc(int token)
             return NEWLINE;
         case TYPE:
             switch (yytext[0]) {
-                case 'v': lasttype = T_VOID; break;
-                case 'c': lasttype = T_CHAR; break;
-                case 'i': lasttype = T_INT; break;
-                case 'f': lasttype = T_FLOAT; break;
-                case 'd': lasttype = T_DOUBLE; break;
+                case 'v': STACK_PUSH(type_stack, type_top, T_VOID); break;
+                case 'c': STACK_PUSH(type_stack, type_top, T_CHAR); break;
+                case 'i': STACK_PUSH(type_stack, type_top, T_INT); break;
+                case 'f': STACK_PUSH(type_stack, type_top, T_FLOAT); break;
+                case 'd': STACK_PUSH(type_stack, type_top, T_DOUBLE); break;
             }
             return TYPE;
         case ID:
-            lastid_push(env_insert(&curr_env, yytext, yyget_lineno()));
+            STACK_PUSH(id_stack, id_top, env_insert(&curr_env, yytext, yyget_lineno()));
             return ID;
         case STRING:
             return STRING;

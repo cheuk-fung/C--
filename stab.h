@@ -15,9 +15,14 @@ struct Stab {
     BOOL isfunc;
     int ptrcount;
     int arysize;		/* -1 means no size specified,
-                                   other value means the size of the array
-                                */
+                                   other value means the size of the array */
 };
+
+extern int type_top;
+enum Type_kind type_stack[MAX_STACK_SIZE];
+
+extern int id_top;
+struct Stab *id_stack[MAX_STACK_SIZE];
 
 struct Stab *stab_new_symbol(const char *, int);
 
