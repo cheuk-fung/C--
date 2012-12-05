@@ -13,7 +13,7 @@ struct Env {
 struct Env *curr_env;
 
 struct Env *env_new(struct Env *);
-struct Stab *env_insert(struct Env **, const char *, int);
+struct Stab *env_insert(struct Env *, const char *, int);
 
 #endif /* !PARSER_ENV_H */
 

@@ -8,7 +8,8 @@ struct Trie_node {
     struct Stab *symbol;
 };
 
-struct Stab *trie_insert(struct Trie_node **, const char *, int);
+struct Trie_node *trie_new_node();
+struct Stab *trie_insert(struct Trie_node *, const char *, int);
 
 #endif /* !PARSER_TRIE_H */
 

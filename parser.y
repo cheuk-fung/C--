@@ -11,6 +11,8 @@
 %output "parser.c"
 %defines "parser.h"
 
+%initial-action { curr_env = env_new(0); }
+
 %token COMMENT
 %token STRING
 %token CHARACTER
@@ -110,7 +112,7 @@
 
 program		: code				{
 							printf("node id(env id):\tDescription\tChildren\n");
-							syntree_translate($$);
+							syntree_translate($1);
 						}
 		/* TODO: error handling */
 		;
