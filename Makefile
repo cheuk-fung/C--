@@ -3,7 +3,7 @@ CFLAGS = -Wall -g -DNGDEBUG
 LIBS = -ly
 
 PRG = c--
-OBJS = parser.o lexer.o global.o syntree.o env.o stab.o trie.o
+OBJS = parser.o lexer.o syntree.o env.o stab.o trie.o
 
 $(PRG): $(OBJS)
 	$(CC) $(CFLAGS) $(LIBS) -o $@ $^
@@ -14,7 +14,6 @@ parser.h parser.c: parser.y
 	bison $<
 parser.o: global.h lexer.h env.h syntree.h stab.h
 lexer.o: global.h parser.h env.h stab.h
-global.o: global.h stab.h
 syntree.o: syntree.h global.h lexer.h
 env.o: env.h trie.h stab.h
 stab.o: stab.h

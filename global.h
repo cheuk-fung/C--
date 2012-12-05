@@ -15,9 +15,6 @@
 #define STACK_POP(s, top) s[--top]
 #define STACK_TOP(s, top) s[top - 1]
 
-#include "syntree.h"
-
-struct ID_node *lastid_list;
 int lastval;
 double lastdval;
 

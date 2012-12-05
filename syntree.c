@@ -1,4 +1,7 @@
+#ifdef NGDEBUG
 #include <assert.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "global.h"
@@ -6,23 +9,6 @@
 #include "syntree.h"
 
 static int nodeid_count = 0;
-
-struct ID_node *id_new_node(struct Stab *id)
-{
-    struct ID_node *node = (struct ID_node *)malloc(sizeof(struct ID_node));
-    node->id = id;
-    node->next = 0;
-    node->tail = node;
-    return node;
-}
-
-struct ID_node *id_insert_last(struct ID_node *dest, struct ID_node *src)
-{
-    assert(dest->tail->next == NULL);
-    dest->tail->next = src;
-    dest->tail = src->tail;
-    return dest;
-}
 
 struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind)
 {
@@ -46,7 +32,9 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind)
 
 struct Syntree_node *syntree_insert_last(struct Syntree_node *dest, struct Syntree_node *src)
 {
+#ifdef NGDEBUG
     assert(dest->tail->next == NULL);
+#endif
     dest->tail->next = src;
     dest->tail = src->tail;
     return dest;
@@ -75,7 +63,7 @@ int syntree_translate(struct Syntree_node *root)
         printf("%2d(%d):\t", node->nodeid, node->env->envid);
         switch (node->nkind) {
             case K_FUNC:
-                printf("Function definition:\tsymbol:%s\t", node->id->name);
+                printf("Function definition:\tsymbol: %s\t", node->id->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
                 syntree_translate(node->child[1]);
@@ -84,7 +72,7 @@ int syntree_translate(struct Syntree_node *root)
                 break;
             case K_DEF:
                 printf("Var definition: ");
-                switch (node->idlist->id->type) {
+                switch (node->id->type) {
                     case T_VOID: printf("void"); break;
                     case T_INT: printf("int"); break;
                     case T_CHAR: printf("char"); break;
@@ -92,12 +80,7 @@ int syntree_translate(struct Syntree_node *root)
                     case T_DOUBLE: printf("double"); break;
                     case T_STRUCT: /* TODO */ break;
                 }
-                struct ID_node *idlist = node->idlist;
-                printf("\tsymbol(s):");
-                for ( ; idlist; idlist = idlist->next) {
-                    printf(" %s", idlist->id->name);
-                }
-                putchar('\t');
+                printf("\tsymbol: %s\t", node->id->name);
                 print_child(node);
                 break;
             case K_STMT:

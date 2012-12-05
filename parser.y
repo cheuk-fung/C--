@@ -125,40 +125,43 @@ global		: var_def			{ $$ = $1; }
 		;
 
 identifier	: ID				{
-							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
 						}
 		| MULTIPLY ID			{
 		/* pointer, does not support pointer to pointer */
-							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
 							STACK_TOP(id_stack, id_top)->ptrcount = 1;
 							STACK_TOP(id_stack, id_top)->arysize = -1;
 						}
 		| ID LSBRAC INTEGER RSBRAC	{
 		/* one-dimensional array */
-							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
 							STACK_TOP(id_stack, id_top)->ptrcount = 1;	/* array is pointer essentially */
 							STACK_TOP(id_stack, id_top)->arysize = lastval;
 						}
 		| MULTIPLY ID LSBRAC INTEGER RSBRAC	{
 		/* one-dimensional array of pointer */	
-							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
 							STACK_TOP(id_stack, id_top)->ptrcount = 2;	/* array is pointer essentially */
 							STACK_TOP(id_stack, id_top)->arysize = lastval;
 						}
 		;
 
 idlist		: idlist COMMA identifier	{
-							id_insert_last(lastid_list, id_new_node(STACK_POP(id_stack, id_top)));
+							struct Syntree_node *t = syntree_new_node(0, K_DEF);
+							t->id = STACK_POP(id_stack, id_top);
+							$$ = syntree_insert_last($1, t);
 						}
 		| identifier			{
-							lastid_list = id_new_node(STACK_POP(id_stack, id_top));
+							$$ = syntree_new_node(0, K_DEF);
+							$$->id = STACK_POP(id_stack, id_top);
 						}
 		;
 
 var_def		: TYPE idlist SEMI		{
 	 	/* does not support define with initialization */
-							$$ = syntree_new_node(0, K_DEF);
-							$$->idlist = lastid_list;
+							$$ = $2;
+							STACK_POP(type_stack, type_top);
 						}
 		;
 
