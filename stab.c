@@ -3,7 +3,7 @@
 #include "stab.h"
 
 int type_top = 0;
-int id_top = 0;
+int symbol_top = 0;
 
 struct Stab *stab_new_symbol(const char *name, int lineno)
 {
@@ -14,23 +14,11 @@ struct Stab *stab_new_symbol(const char *name, int lineno)
     return symbol;
 }
 
-static struct Array_size *array_size_new(size_t size)
+struct Arysize_entry *arysize_new(size_t size)
 {
-    struct Array_size *as = (struct Array_size *)malloc(sizeof(struct Array_size));
+    struct Arysize_entry *as = (struct Arysize_entry *)malloc(sizeof(struct Arysize_entry));
     as->size = size;
     as->next = NULL;
     return as;
-}
-
-void array_size_insert(struct Stab *symbol, size_t size)
-{
-    if (symbol->arysize == NULL) {
-        symbol->arysize = array_size_new(size);
-    } else {
-        struct Array_size *ptr = symbol->arysize;
-        while (ptr->next != NULL) ptr = ptr->next;
-        ptr->next = array_size_new(size);
-    }
-    symbol->arycount++;
 }
 

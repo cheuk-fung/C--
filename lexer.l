@@ -141,7 +141,7 @@ static int proc(int token)
             }
             return TYPE;
         case ID:
-            STACK_PUSH(id_stack, id_top, env_insert(curr_env, yytext, yyget_lineno()));
+            STACK_PUSH(symbol_stack, symbol_top, env_insert(curr_env, yytext, yyget_lineno()));
             return ID;
         case STRING:
             return STRING;

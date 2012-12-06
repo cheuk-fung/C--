@@ -27,7 +27,7 @@ struct Syntree_node {
         char *str;
         int val;
         double dval;
-        struct Stab *id;
+        struct Stab *symbol;
     };
 
     int nodeid;

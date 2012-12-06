@@ -11,9 +11,24 @@
 
 #define MAX_STACK_SIZE 1024
 
-#define STACK_PUSH(s, top, item) s[top++] = item
-#define STACK_POP(s, top) s[--top]
-#define STACK_TOP(s, top) s[top - 1]
+#define STACK_PUSH(stack, top, entry) \
+    do { \
+        stack[top++] = entry; \
+    } while (0)
+
+#define STACK_POP(stack, top) stack[--top]
+#define STACK_TOP(stack, top) stack[top - 1]
+
+#define LIST_ADD(list, entry) \
+    do { \
+        if (list == NULL) { \
+            list = entry; \
+        } else { \
+            typeof(list) ptr = list; \
+            while (ptr->next) ptr = ptr->next; \
+            ptr->next = entry; \
+        } \
+    } while (0)
 
 int lastval;
 double lastdval;

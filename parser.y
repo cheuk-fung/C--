@@ -128,30 +128,42 @@ global		: var_def			{ $$ = $1; }
 		;
 
 pointer		: MULTIPLY ID			{
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->ptrcount = 1;
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							symbol->type = STACK_TOP(type_stack, type_top);
+							symbol->ptrcount = 1;
 						}
 		| MULTIPLY pointer		{
-							STACK_TOP(id_stack, id_top)->ptrcount++;
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							symbol->ptrcount++;
 						}
 		;
 
 array		: ID LSBRAC INTEGER RSBRAC	{
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->ptrcount = 0;
-							array_size_insert(STACK_TOP(id_stack, id_top), lastval);
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							struct Arysize_entry *as = arysize_new(lastval);
+							symbol->type = STACK_TOP(type_stack, type_top);
+							symbol->ptrcount = 0;
+							symbol->arycount = 1;
+							LIST_ADD(symbol->arysize_list, as);
 						}
 		| pointer LSBRAC INTEGER RSBRAC	{
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->ptrcount = 1;
-							array_size_insert(STACK_TOP(id_stack, id_top), lastval);
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							struct Arysize_entry *as = arysize_new(lastval);
+							symbol->type = STACK_TOP(type_stack, type_top);
+							symbol->ptrcount = 1;
+							symbol->arycount = 1;
+							LIST_ADD(symbol->arysize_list, as);
 						}
 		| array LSBRAC INTEGER RSBRAC	{
-							array_size_insert(STACK_TOP(id_stack, id_top), lastval);
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							struct Arysize_entry *as = arysize_new(lastval);
+							symbol->arycount++;
+							LIST_ADD(symbol->arysize_list, as);
 						}
 
 identifier	: ID				{
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							symbol->type = STACK_TOP(type_stack, type_top);
 						}
 		| pointer
 		| array
@@ -159,12 +171,12 @@ identifier	: ID				{
 
 idlist		: idlist COMMA identifier	{
 							struct Syntree_node *t = syntree_new_node(0, K_DEF);
-							t->id = STACK_POP(id_stack, id_top);
+							t->symbol = STACK_POP(symbol_stack, symbol_top);
 							$$ = syntree_insert_last($1, t);
 						}
 		| identifier			{
 							$$ = syntree_new_node(0, K_DEF);
-							$$->id = STACK_POP(id_stack, id_top);
+							$$->symbol = STACK_POP(symbol_stack, symbol_top);
 						}
 		;
 
@@ -184,15 +196,17 @@ var_def_list	: var_def_list var_def		{
 		;
 
 func_head	: TYPE ID			{
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							symbol->type = STACK_POP(type_stack, type_top);
+							symbol->isfunc = TRUE;
 							$$ = syntree_new_node(2, K_FUNC);
-							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->isfunc = TRUE;
-							$$->id = STACK_POP(id_stack, id_top);
+							$$->symbol = STACK_POP(symbol_stack, symbol_top);
 						}
 		| TYPE pointer			{
+							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							symbol->isfunc = TRUE;
 							$$ = syntree_new_node(2, K_FUNC);
-							STACK_TOP(id_stack, id_top)->isfunc = TRUE;
-							$$->id = STACK_POP(id_stack, id_top);
+							$$->symbol = STACK_POP(symbol_stack, symbol_top);
 						}
 		;
 
@@ -307,7 +321,7 @@ expr		: expr INC				{
 								$$->child[0] = $1;
 								$$->child[1] = $3;
 								$$->expr = K_ARY;
-								$$->id = $1->id;
+								$$->symbol = $1->symbol;
 							}
 		| expr DOT expr				{
 								$$ = syntree_new_node(2, K_EXPR);
@@ -598,7 +612,7 @@ expr		: expr INC				{
 		/* TODO: add hash operation to check ID existence */
 								$$ = syntree_new_node(0, K_EXPR);
 								$$->expr = K_ID;
-								$$->id = STACK_POP(id_stack, id_top);
+								$$->symbol = STACK_POP(symbol_stack, symbol_top);
 							}
 		| call_func				{ $$ = $1; }
 		/* TODO: COMMA, IFF */

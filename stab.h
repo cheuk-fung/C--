@@ -7,9 +7,16 @@
 
 enum Type_kind { T_VOID, T_INT, T_CHAR, T_FLOAT, T_DOUBLE, T_STRUCT };
 
-struct Array_size {
+struct Stab;
+
+struct Arysize_entry {
     size_t size;
-    struct Array_size *next;
+    struct Arysize_entry *next;
+};
+
+struct Param_entry {
+    struct Stab *symbol;
+    struct Param_entry *next;
 };
 
 struct Stab {
@@ -19,18 +26,24 @@ struct Stab {
     enum Type_kind type;
     BOOL isfunc;
     int ptrcount;
-    int arycount;
-    struct Array_size *arysize;
+    union {
+        int arycount;
+        int parmacount;
+    };
+    union {
+        struct Arysize_entry *arysize_list;
+        struct Param_entry *param_list;
+    };
 };
 
 extern int type_top;
 enum Type_kind type_stack[MAX_STACK_SIZE];
 
-extern int id_top;
-struct Stab *id_stack[MAX_STACK_SIZE];
+extern int symbol_top;
+struct Stab *symbol_stack[MAX_STACK_SIZE];
 
 struct Stab *stab_new_symbol(const char *, int);
-void array_size_insert(struct Stab *, size_t);
+struct Arysize_entry *arysize_new(size_t);
 
 #endif /* !PARSER_STAB_H */
 

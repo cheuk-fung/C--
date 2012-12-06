@@ -54,9 +54,9 @@ static void print_child(struct Syntree_node *node)
     putchar(10);
 }
 
-static void print_id(struct Stab *id)
+static void print_symbol(struct Stab *symbol)
 {
-    switch (id->type) {
+    switch (symbol->type) {
         case T_VOID: printf("void"); break;
         case T_INT: printf("int"); break;
         case T_CHAR: printf("char"); break;
@@ -64,15 +64,15 @@ static void print_id(struct Stab *id)
         case T_DOUBLE: printf("double"); break;
         case T_STRUCT: /* TODO */ break;
     }
-    if (id->ptrcount) {
+    if (symbol->ptrcount) {
         putchar(' ');
         int t;
-        for (t = 0; t < id->ptrcount; t++) putchar('*');
+        for (t = 0; t < symbol->ptrcount; t++) putchar('*');
     }
-    if (id->arycount) {
+    if (symbol->arycount) {
         putchar(' ');
-        struct Array_size *as;
-        for (as = id->arysize; as; as = as->next) {
+        struct Arysize_entry *as;
+        for (as = symbol->arysize_list; as; as = as->next) {
             printf("[%zd]", as->size);
         }
     }
@@ -88,8 +88,8 @@ int syntree_translate(struct Syntree_node *root)
         switch (node->nkind) {
             case K_FUNC:
                 printf("Function definition:\t");
-                print_id(node->id);
-                printf("\tsymbol: %s\t", node->id->name);
+                print_symbol(node->symbol);
+                printf("\tsymbol: %s\t", node->symbol->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
                 syntree_translate(node->child[1]);
@@ -98,8 +98,8 @@ int syntree_translate(struct Syntree_node *root)
                 break;
             case K_DEF:
                 printf("Var definition: ");
-                print_id(node->id);
-                printf("\tsymbol: %s\t", node->id->name);
+                print_symbol(node->symbol);
+                printf("\tsymbol: %s\t", node->symbol->name);
                 print_child(node);
                 break;
             case K_STMT:
@@ -163,11 +163,11 @@ int syntree_translate(struct Syntree_node *root)
                         print_child(node);
                         break;
                     case K_ID:
-                        printf("symbol:\t%s\t", node->id->name);
+                        printf("symbol:\t%s\t", node->symbol->name);
                         print_child(node);
                         break;
                     case K_ARY:
-                        printf("ARY symbol:\t%s\t", node->id->name);
+                        printf("ARY symbol:\t%s\t", node->symbol->name);
                         print_child(node);
                         syntree_translate(node->child[0]);
                         syntree_translate(node->child[1]);
