@@ -80,6 +80,18 @@ int syntree_translate(struct Syntree_node *root)
                     case T_DOUBLE: printf("double"); break;
                     case T_STRUCT: /* TODO */ break;
                 }
+                if (node->id->ptrcount) {
+                    putchar(' ');
+                    int t;
+                    for (t = 0; t < node->id->ptrcount; t++) putchar('*');
+                }
+                if (node->id->arycount) {
+                    putchar(' ');
+                    struct Array_size *as;
+                    for (as = node->id->arysize; as; as = as->next) {
+                        printf("[%zd]", as->size);
+                    }
+                }
                 printf("\tsymbol: %s\t", node->id->name);
                 print_child(node);
                 break;
@@ -148,9 +160,10 @@ int syntree_translate(struct Syntree_node *root)
                         print_child(node);
                         break;
                     case K_ARY:
-                        printf("ARY symbol:\t%s[]\t", node->id->name);
+                        printf("ARY symbol:\t%s\t", node->id->name);
                         print_child(node);
                         syntree_translate(node->child[0]);
+                        syntree_translate(node->child[1]);
                         break;
                     case K_OPR:
                         printf("Operation expression:\t");

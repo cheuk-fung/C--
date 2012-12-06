@@ -7,6 +7,11 @@
 
 enum Type_kind { T_VOID, T_INT, T_CHAR, T_FLOAT, T_DOUBLE, T_STRUCT };
 
+struct Array_size {
+    size_t size;
+    struct Array_size *next;
+};
+
 struct Stab {
     char *name;
     int addr;			// given during translation
@@ -14,8 +19,8 @@ struct Stab {
     enum Type_kind type;
     BOOL isfunc;
     int ptrcount;
-    int arysize;		/* -1 means no size specified,
-                                   other value means the size of the array */
+    int arycount;
+    struct Array_size *arysize;
 };
 
 extern int type_top;
@@ -25,6 +30,7 @@ extern int id_top;
 struct Stab *id_stack[MAX_STACK_SIZE];
 
 struct Stab *stab_new_symbol(const char *, int);
+void array_size_insert(struct Stab *, size_t);
 
 #endif /* !PARSER_STAB_H */
 

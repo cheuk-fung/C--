@@ -14,3 +14,23 @@ struct Stab *stab_new_symbol(const char *name, int lineno)
     return symbol;
 }
 
+static struct Array_size *array_size_new(size_t size)
+{
+    struct Array_size *as = (struct Array_size *)malloc(sizeof(struct Array_size));
+    as->size = size;
+    as->next = NULL;
+    return as;
+}
+
+void array_size_insert(struct Stab *symbol, size_t size)
+{
+    if (symbol->arysize == NULL) {
+        symbol->arysize = array_size_new(size);
+    } else {
+        struct Array_size *ptr = symbol->arysize;
+        while (ptr->next != NULL) ptr = ptr->next;
+        ptr->next = array_size_new(size);
+    }
+    symbol->arycount++;
+}
+

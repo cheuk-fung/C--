@@ -115,6 +115,7 @@ program		: code				{
 							syntree_translate($1);
 						}
 		/* TODO: error handling */
+		/* TODO: memory free */
 		;
 
 code		: code global			{ $$ = syntree_insert_last($1, $2); }
@@ -126,27 +127,34 @@ global		: var_def			{ $$ = $1; }
 		| struct_def			{ $$ = $1; }
 		;
 
+pointer		: MULTIPLY ID			{
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->ptrcount = 1;
+						}
+		| MULTIPLY pointer		{
+							STACK_TOP(id_stack, id_top)->ptrcount++;
+						}
+		;
+
+array		: ID LSBRAC INTEGER RSBRAC	{
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->ptrcount = 0;
+							array_size_insert(STACK_TOP(id_stack, id_top), lastval);
+						}
+		| pointer LSBRAC INTEGER RSBRAC	{
+							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
+							STACK_TOP(id_stack, id_top)->ptrcount = 1;
+							array_size_insert(STACK_TOP(id_stack, id_top), lastval);
+						}
+		| array LSBRAC INTEGER RSBRAC	{
+							array_size_insert(STACK_TOP(id_stack, id_top), lastval);
+						}
+
 identifier	: ID				{
 							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
 						}
-		| MULTIPLY ID			{
-		/* pointer, does not support pointer to pointer */
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->ptrcount = 1;
-							STACK_TOP(id_stack, id_top)->arysize = -1;
-						}
-		| ID LSBRAC INTEGER RSBRAC	{
-		/* one-dimensional array */
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->ptrcount = 1;	/* array is pointer essentially */
-							STACK_TOP(id_stack, id_top)->arysize = lastval;
-						}
-		| MULTIPLY ID LSBRAC INTEGER RSBRAC	{
-		/* one-dimensional array of pointer */	
-							STACK_TOP(id_stack, id_top)->type = STACK_TOP(type_stack, type_top);
-							STACK_TOP(id_stack, id_top)->ptrcount = 2;	/* array is pointer essentially */
-							STACK_TOP(id_stack, id_top)->arysize = lastval;
-						}
+		| pointer
+		| array
 		;
 
 idlist		: idlist COMMA identifier	{
@@ -592,11 +600,12 @@ expr		: expr INC				{
 								$$->expr = K_ID;
 								$$->id = STACK_POP(id_stack, id_top);
 							}
-		| ID LSBRAC expr RSBRAC			{
-								$$ = syntree_new_node(1, K_EXPR);
-								$$->child[0] = $3;
+		| expr LSBRAC expr RSBRAC		{
+								$$ = syntree_new_node(2, K_EXPR);
+								$$->child[0] = $1;
+								$$->child[1] = $3;
 								$$->expr = K_ARY;
-								$$->id = STACK_POP(id_stack, id_top);
+								$$->id = $1->id;
 							}
 		| call_func				{ $$ = $1; }
 		/* TODO: COMMA, IFF */
