@@ -21,13 +21,9 @@
 
 #define LIST_ADD(list, entry) \
     do { \
-        if (list == NULL) { \
-            list = entry; \
-        } else { \
-            typeof(list) ptr = list; \
-            while (ptr->next) ptr = ptr->next; \
-            ptr->next = entry; \
-        } \
+        typeof(list) ptr = list; \
+        while (ptr->next) ptr = ptr->next; \
+        ptr->next = entry; \
     } while (0)
 
 int lastval;

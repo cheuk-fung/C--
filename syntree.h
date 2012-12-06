@@ -7,7 +7,7 @@
 
 enum Node_kind { K_FUNC, K_STRUCT, K_DEF, K_STMT, K_EXPR };
 enum Stmt_kind { K_IF, K_IFELSE, K_WHILE, K_DO, K_FOR, K_SWITCH, K_GOTO, K_RET };
-enum Expr_kind { K_OPR, K_CHAR, K_STR, K_INT, K_FLOAT, K_ID, K_ARY };
+enum Expr_kind { K_OPR, K_CHAR, K_STR, K_INT, K_FLOAT, K_SYM, K_ARY };
 
 struct Syntree_node {
     int child_count;

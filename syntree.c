@@ -54,7 +54,7 @@ static void print_child(struct Syntree_node *node)
     putchar(10);
 }
 
-static void print_symbol(struct Stab *symbol)
+static void print_symbol(struct Stab *symbol, BOOL isfunc)
 {
     switch (symbol->type) {
         case T_VOID: printf("void"); break;
@@ -65,15 +65,23 @@ static void print_symbol(struct Stab *symbol)
         case T_STRUCT: /* TODO */ break;
     }
     if (symbol->ptrcount) {
-        putchar(' ');
+        printf(" (%d)", symbol->ptrcount);
         int t;
         for (t = 0; t < symbol->ptrcount; t++) putchar('*');
     }
-    if (symbol->arycount) {
-        putchar(' ');
-        struct Arysize_entry *as;
-        for (as = symbol->arysize_list; as; as = as->next) {
-            printf("[%zd]", as->size);
+    if (isfunc && symbol->paramcount) {
+        putchar(10);
+        printf("\tParamlist(%d): ", symbol->paramcount);
+        struct Param_entry *pe;
+        for (pe = symbol->param_list; pe; pe = pe->next) {
+            print_symbol(pe->symbol, FALSE);
+            printf(" %s\t", pe->symbol->name);
+        }
+    } else if (symbol->arycount) {
+        printf(" (%d)", symbol->arycount);
+        struct Arysize_entry *ae;
+        for (ae = symbol->arysize_list; ae; ae = ae->next) {
+            printf("[%zd]", ae->size);
         }
     }
 }
@@ -88,17 +96,16 @@ int syntree_translate(struct Syntree_node *root)
         switch (node->nkind) {
             case K_FUNC:
                 printf("Function definition:\t");
-                print_symbol(node->symbol);
+                print_symbol(node->symbol, TRUE);
                 printf("\tsymbol: %s\t", node->symbol->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
-                syntree_translate(node->child[1]);
                 break;
             case K_STRUCT:
                 break;
             case K_DEF:
                 printf("Var definition: ");
-                print_symbol(node->symbol);
+                print_symbol(node->symbol, FALSE);
                 printf("\tsymbol: %s\t", node->symbol->name);
                 print_child(node);
                 break;
@@ -162,7 +169,7 @@ int syntree_translate(struct Syntree_node *root)
                         printf("Float point constant:\t%lf\t", node->dval);
                         print_child(node);
                         break;
-                    case K_ID:
+                    case K_SYM:
                         printf("symbol:\t%s\t", node->symbol->name);
                         print_child(node);
                         break;

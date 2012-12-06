@@ -28,7 +28,7 @@ struct Stab {
     int ptrcount;
     union {
         int arycount;
-        int parmacount;
+        int paramcount;
     };
     union {
         struct Arysize_entry *arysize_list;
@@ -39,11 +39,12 @@ struct Stab {
 extern int type_top;
 enum Type_kind type_stack[MAX_STACK_SIZE];
 
-extern int symbol_top;
-struct Stab *symbol_stack[MAX_STACK_SIZE];
+extern int sym_top;
+struct Stab *sym_stack[MAX_STACK_SIZE];
 
 struct Stab *stab_new_symbol(const char *, int);
 struct Arysize_entry *arysize_new(size_t);
+struct Param_entry *param_new(struct Stab *);
 
 #endif /* !PARSER_STAB_H */
 

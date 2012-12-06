@@ -1,4 +1,8 @@
 %{
+#ifdef NGDEBUG
+#include <assert.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include "global.h"
@@ -70,7 +74,7 @@
 %token XORASN
 %token ORASN
 %token MEMBER
-%token ID
+%token SYM
 %token FLOATPNT
 %token INTEGER
 %token TYPE
@@ -113,6 +117,10 @@
 program		: code				{
 							printf("node id(env id):\tDescription\tChildren\n");
 							syntree_translate($1);
+#ifdef NGDEBUG
+							assert(sym_top == 0);
+							assert(type_top == 0);
+#endif
 						}
 		/* TODO: error handling */
 		/* TODO: memory free */
@@ -127,56 +135,48 @@ global		: var_def			{ $$ = $1; }
 		| struct_def			{ $$ = $1; }
 		;
 
-pointer		: MULTIPLY ID			{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+pointer		: MULTIPLY SYM			{
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
 							symbol->ptrcount = 1;
 						}
 		| MULTIPLY pointer		{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->ptrcount++;
 						}
 		;
 
-array		: ID LSBRAC INTEGER RSBRAC	{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
-							struct Arysize_entry *as = arysize_new(lastval);
-							symbol->type = STACK_TOP(type_stack, type_top);
-							symbol->ptrcount = 0;
-							symbol->arycount = 1;
-							LIST_ADD(symbol->arysize_list, as);
-						}
-		| pointer LSBRAC INTEGER RSBRAC	{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
-							struct Arysize_entry *as = arysize_new(lastval);
-							symbol->type = STACK_TOP(type_stack, type_top);
-							symbol->ptrcount = 1;
-							symbol->arycount = 1;
-							LIST_ADD(symbol->arysize_list, as);
-						}
-		| array LSBRAC INTEGER RSBRAC	{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
-							struct Arysize_entry *as = arysize_new(lastval);
-							symbol->arycount++;
-							LIST_ADD(symbol->arysize_list, as);
-						}
-
-identifier	: ID				{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
+id_noary	: SYM				{
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
 						}
 		| pointer
+		;
+
+array		: array LSBRAC INTEGER RSBRAC	{
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+							struct Arysize_entry *ae = arysize_new(lastval);
+							symbol->arycount++;
+							LIST_ADD(symbol->arysize_list, ae);
+						}
+		| id_noary LSBRAC INTEGER RSBRAC{
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+							symbol->arycount = 1;
+							symbol->arysize_list = arysize_new(lastval);
+						}
+
+identifier	: id_noary
 		| array
 		;
 
 idlist		: idlist COMMA identifier	{
 							struct Syntree_node *t = syntree_new_node(0, K_DEF);
-							t->symbol = STACK_POP(symbol_stack, symbol_top);
+							t->symbol = STACK_POP(sym_stack, sym_top);
 							$$ = syntree_insert_last($1, t);
 						}
 		| identifier			{
 							$$ = syntree_new_node(0, K_DEF);
-							$$->symbol = STACK_POP(symbol_stack, symbol_top);
+							$$->symbol = STACK_POP(sym_stack, sym_top);
 						}
 		;
 
@@ -195,51 +195,41 @@ var_def_list	: var_def_list var_def		{
 						}
 		;
 
-func_head	: TYPE ID			{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
-							symbol->type = STACK_POP(type_stack, type_top);
-							symbol->isfunc = TRUE;
-							$$ = syntree_new_node(2, K_FUNC);
-							$$->symbol = STACK_POP(symbol_stack, symbol_top);
-						}
-		| TYPE pointer			{
-							struct Stab *symbol = STACK_TOP(symbol_stack, symbol_top);
-							symbol->isfunc = TRUE;
-							$$ = syntree_new_node(2, K_FUNC);
-							$$->symbol = STACK_POP(symbol_stack, symbol_top);
-						}
-		;
-
-func_def	: func_head LPAREN params RPAREN block	{
-								$1->child[0] = $3;
-								$1->child[1] = $5;
-								$$ = $1;
+func_def	: TYPE id_noary LPAREN params RPAREN block	{
+		/* TODO: function parameters env is not correct */
+								$$ = syntree_new_node(1, K_FUNC);
+								$$->symbol = STACK_POP(sym_stack, sym_top);
+								$$->symbol->isfunc = TRUE;
+								$$->symbol->type = STACK_POP(type_stack, type_top);	
+								$$->child[0] = $6;
 							}
 		;
 
-struct_def	: STRUCT ID LBRACE var_def_list RBRACE SEMI	{
+struct_def	: STRUCT SYM LBRACE var_def_list RBRACE SEMI	{
 		/* TODO */
 	  	/* does not support defining struct right after struct def or without any var definition */
 							}
 		;
 
-params		: param_list				{
-								$$ = 0;
-		/* TODO */
-							}
-		|					{ $$ = 0; }
+params		: param_list
+		|
 		;
 
 param_list	: param_list COMMA param		{
-		/* TODO */
+								struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
+								struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+								symbol->paramcount++;
+								LIST_ADD(symbol->param_list, pe);
 							}
-		| param
+		| param					{
+								struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
+								struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+								symbol->paramcount = 1;
+								symbol->param_list = pe;
+							}
 		;
 
-param		: TYPE ID				{
-		/* TODO */
-							}
-		| TYPE MULTIPLY ID	/* support pointer parameter but does not support array parameter */
+param		: TYPE identifier			{ STACK_POP(type_stack, type_top); }
 		;
 
 sentence	: var_def				{ $$ = $1; }
@@ -608,11 +598,11 @@ expr		: expr INC				{
 								$$->expr = K_INT;
 								$$->val = lastval;
 							}
-		| ID					{
-		/* TODO: add hash operation to check ID existence */
+		| SYM					{
+		/* TODO: add hash operation to check SYM existence */
 								$$ = syntree_new_node(0, K_EXPR);
-								$$->expr = K_ID;
-								$$->symbol = STACK_POP(symbol_stack, symbol_top);
+								$$->expr = K_SYM;
+								$$->symbol = STACK_POP(sym_stack, sym_top);
 							}
 		| call_func				{ $$ = $1; }
 		/* TODO: COMMA, IFF */
@@ -622,7 +612,7 @@ exprz		: expr					{ $$ = $1; }
 		|					{ $$ = 0; }
 		;
 
-call_func	: ID LPAREN args RPAREN			{
+call_func	: SYM LPAREN args RPAREN			{
 		/* TODO */
 							}
 		;

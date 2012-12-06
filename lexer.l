@@ -18,7 +18,7 @@ static int proc(int);
 whitespace	[ \t]+
 floatnum	[0-9]+\.|[0-9]*\.[0-9]+
 integer		[0-9]+
-identifier	[_a-zA-Z]+
+symbol		[_a-zA-Z]+
 blkcmtbegin	\/\*
 blkcmtend	\*\/
 linecmt		\/\/
@@ -101,7 +101,7 @@ type		void|char|int|float|double
 "case"		{ int r =  proc(CASE); if (r != COMMENT) return r; }
 "goto"		{ int r =  proc(GOTO); if (r != COMMENT) return r; }
 "return"	{ int r =  proc(RETURN); if (r != COMMENT) return r; }
-{identifier}	{ int r =  proc(ID); if (r != COMMENT) return r; }
+{symbol}	{ int r =  proc(SYM); if (r != COMMENT) return r; }
 {floatnum}	{ int r =  proc(FLOATPNT); if (r != COMMENT) return r; }
 {integer}	{ int r =  proc(INTEGER); if (r != COMMENT) return r; }
 
@@ -140,9 +140,9 @@ static int proc(int token)
                 case 'd': STACK_PUSH(type_stack, type_top, T_DOUBLE); break;
             }
             return TYPE;
-        case ID:
-            STACK_PUSH(symbol_stack, symbol_top, env_insert(curr_env, yytext, yyget_lineno()));
-            return ID;
+        case SYM:
+            STACK_PUSH(sym_stack, sym_top, env_insert(curr_env, yytext, yyget_lineno()));
+            return SYM;
         case STRING:
             return STRING;
         case CHARACTER:
