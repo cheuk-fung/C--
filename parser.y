@@ -103,7 +103,7 @@
 %left PLUS MINUS
 %left MULTIPLY DIVIDE MOD
 %right PINC PDEC UPLUS UMINUS LNOT NOT PTR REFR
-%left INC DEC DOT MEMBER
+%left INC DEC LSBRAC DOT MEMBER
 
 %nonassoc NOELSE
 %nonassoc ELSE
@@ -189,12 +189,9 @@ func_head	: TYPE ID			{
 							STACK_TOP(id_stack, id_top)->isfunc = TRUE;
 							$$->id = STACK_POP(id_stack, id_top);
 						}
-		| TYPE MULTIPLY ID		{
+		| TYPE pointer			{
 							$$ = syntree_new_node(2, K_FUNC);
-							STACK_TOP(id_stack, id_top)->type = STACK_POP(type_stack, type_top);
 							STACK_TOP(id_stack, id_top)->isfunc = TRUE;
-							STACK_TOP(id_stack, id_top)->ptrcount = 1;
-							STACK_TOP(id_stack, id_top)->arysize = -1;
 							$$->id = STACK_POP(id_stack, id_top);
 						}
 		;
@@ -304,21 +301,25 @@ expr		: expr INC				{
 								$$->expr = K_OPR;
 								$$->token = DEC;
 							}
-		| expr DOT ID				{
+		| LPAREN expr RPAREN			{ $$ = $2; }
+		| expr LSBRAC expr RSBRAC		{
 								$$ = syntree_new_node(2, K_EXPR);
 								$$->child[0] = $1;
-								$$->child[1] = syntree_new_node(0, K_EXPR);
-								$$->child[1]->expr = K_ID;
-								$$->child[1]->id = STACK_POP(id_stack, id_top);
+								$$->child[1] = $3;
+								$$->expr = K_ARY;
+								$$->id = $1->id;
+							}
+		| expr DOT expr				{
+								$$ = syntree_new_node(2, K_EXPR);
+								$$->child[0] = $1;
+								$$->child[1] = $2;
 								$$->expr = K_OPR;
 								$$->token = DOT;
 							}
-		| expr MEMBER ID			{
+		| expr MEMBER expr			{
 								$$ = syntree_new_node(2, K_EXPR);
 								$$->child[0] = $1;
-								$$->child[1] = syntree_new_node(0, K_EXPR);
-								$$->child[1]->expr = K_ID;
-								$$->child[1]->id = STACK_POP(id_stack, id_top);
+								$$->child[1] = $2;
 								$$->expr = K_OPR;
 								$$->token = MEMBER;
 							}
@@ -573,7 +574,6 @@ expr		: expr INC				{
 								$$->expr = K_OPR;
 								$$->token = ORASN;
 							}
-		| LPAREN expr RPAREN			{ $$ = $2; }
 		| STRING				{
 								$$ = syntree_new_node(0, K_EXPR);
 								$$->expr = K_STR;
@@ -599,13 +599,6 @@ expr		: expr INC				{
 								$$ = syntree_new_node(0, K_EXPR);
 								$$->expr = K_ID;
 								$$->id = STACK_POP(id_stack, id_top);
-							}
-		| expr LSBRAC expr RSBRAC		{
-								$$ = syntree_new_node(2, K_EXPR);
-								$$->child[0] = $1;
-								$$->child[1] = $3;
-								$$->expr = K_ARY;
-								$$->id = $1->id;
 							}
 		| call_func				{ $$ = $1; }
 		/* TODO: COMMA, IFF */

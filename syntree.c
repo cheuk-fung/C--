@@ -54,6 +54,30 @@ static void print_child(struct Syntree_node *node)
     putchar(10);
 }
 
+static void print_id(struct Stab *id)
+{
+    switch (id->type) {
+        case T_VOID: printf("void"); break;
+        case T_INT: printf("int"); break;
+        case T_CHAR: printf("char"); break;
+        case T_FLOAT: printf("float"); break;
+        case T_DOUBLE: printf("double"); break;
+        case T_STRUCT: /* TODO */ break;
+    }
+    if (id->ptrcount) {
+        putchar(' ');
+        int t;
+        for (t = 0; t < id->ptrcount; t++) putchar('*');
+    }
+    if (id->arycount) {
+        putchar(' ');
+        struct Array_size *as;
+        for (as = id->arysize; as; as = as->next) {
+            printf("[%zd]", as->size);
+        }
+    }
+}
+
 int syntree_translate(struct Syntree_node *root)
 {
     if (root == NULL) return 0;
@@ -63,7 +87,9 @@ int syntree_translate(struct Syntree_node *root)
         printf("%2d(%d):\t", node->nodeid, node->env->envid);
         switch (node->nkind) {
             case K_FUNC:
-                printf("Function definition:\tsymbol: %s\t", node->id->name);
+                printf("Function definition:\t");
+                print_id(node->id);
+                printf("\tsymbol: %s\t", node->id->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
                 syntree_translate(node->child[1]);
@@ -72,26 +98,7 @@ int syntree_translate(struct Syntree_node *root)
                 break;
             case K_DEF:
                 printf("Var definition: ");
-                switch (node->id->type) {
-                    case T_VOID: printf("void"); break;
-                    case T_INT: printf("int"); break;
-                    case T_CHAR: printf("char"); break;
-                    case T_FLOAT: printf("float"); break;
-                    case T_DOUBLE: printf("double"); break;
-                    case T_STRUCT: /* TODO */ break;
-                }
-                if (node->id->ptrcount) {
-                    putchar(' ');
-                    int t;
-                    for (t = 0; t < node->id->ptrcount; t++) putchar('*');
-                }
-                if (node->id->arycount) {
-                    putchar(' ');
-                    struct Array_size *as;
-                    for (as = node->id->arysize; as; as = as->next) {
-                        printf("[%zd]", as->size);
-                    }
-                }
+                print_id(node->id);
                 printf("\tsymbol: %s\t", node->id->name);
                 print_child(node);
                 break;
