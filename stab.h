@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "global.h"
+#include "env.h"
 
 enum Type_kind { T_VOID, T_INT, T_CHAR, T_FLOAT, T_DOUBLE, T_STRUCT };
 
@@ -27,12 +28,14 @@ struct Stab {
     BOOL isfunc;
     int ptrcount;
     union {
-        int arycount;
-        int paramcount;
+        int arysize_cnt;
+        int param_cnt;
+        int member_cnt;
     };
     union {
         struct Arysize_entry *arysize_list;
         struct Param_entry *param_list;
+        struct Env *member_env;
     };
 };
 

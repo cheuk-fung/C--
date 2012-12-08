@@ -141,7 +141,6 @@ static int proc(int token)
             }
             return TYPE;
         case SYM:
-            STACK_PUSH(sym_stack, sym_top, env_insert(curr_env, yytext, yyget_lineno()));
             return SYM;
         case STRING:
             return STRING;

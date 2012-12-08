@@ -16,7 +16,7 @@
 %defines "parser.h"
 
 %initial-action {
-	curr_env = env_new(0);
+	global_env = curr_env = env_new(0);
 	can_create_env = TRUE;
 }
 
@@ -138,7 +138,15 @@ global		: var_def			{ $$ = $1; }
 		| struct_def			{ $$ = $1; }
 		;
 
-pointer		: MULTIPLY SYM			{
+sym_insert	: SYM				{
+							STACK_PUSH(sym_stack, sym_top, env_insert(curr_env, yytext, yyget_lineno()));
+						}
+
+sym_lookup	: SYM				{
+							STACK_PUSH(sym_stack, sym_top, env_lookup(curr_env, yytext));
+						}
+
+pointer		: MULTIPLY sym_insert		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
 							symbol->ptrcount = 1;
@@ -149,7 +157,7 @@ pointer		: MULTIPLY SYM			{
 						}
 		;
 
-id_noary	: SYM				{
+id_noary	: sym_insert			{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
 						}
@@ -159,12 +167,12 @@ id_noary	: SYM				{
 array		: array LSBRAC INTEGER RSBRAC	{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							struct Arysize_entry *ae = arysize_new(lastval);
-							symbol->arycount++;
+							symbol->arysize_cnt++;
 							LIST_INSERT(symbol->arysize_list, ae);
 						}
 		| id_noary LSBRAC INTEGER RSBRAC{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
-							symbol->arycount = 1;
+							symbol->arysize_cnt = 1;
 							symbol->arysize_list = arysize_new(lastval);
 						}
 
@@ -216,7 +224,7 @@ func_def	: func_head LPAREN params RPAREN block	{
 						}
 		;
 
-struct_def	: STRUCT SYM LBRACE var_def_list RBRACE SEMI	{
+struct_def	: STRUCT sym_insert LBRACE var_def_list RBRACE SEMI	{
 		/* TODO */
 	  	/* does not support defining struct right after struct def or without any var definition */
 						}
@@ -229,13 +237,13 @@ params		: param_list
 param_list	: param_list COMMA param	{
 							struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
-							symbol->paramcount++;
+							symbol->param_cnt++;
 							LIST_INSERT(symbol->param_list, pe);
 						}
 		| param				{
 							struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
-							symbol->paramcount = 1;
+							symbol->param_cnt = 1;
 							symbol->param_list = pe;
 						}
 		;
@@ -611,7 +619,7 @@ expr		: expr INC			{
 							$$->expr = K_INT;
 							$$->val = lastval;
 						}
-		| SYM				{
+		| sym_lookup			{
 		/* TODO: add hash operation to c existence */
 							$$ = syntree_new_node(0, K_EXPR);
 							$$->expr = K_SYM;
@@ -625,7 +633,7 @@ exprz		: expr				{ $$ = $1; }
 		|				{ $$ = 0; }
 		;
 
-call_func	: SYM LPAREN args RPAREN		{
+call_func	: sym_lookup LPAREN args RPAREN	{
 		/* TODO */
 						}
 		;

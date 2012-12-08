@@ -15,8 +15,8 @@ parser.h parser.c: parser.y
 parser.o: global.h lexer.h env.h syntree.h stab.h
 lexer.o: global.h parser.h env.h stab.h
 syntree.o: syntree.h global.h lexer.h
-env.o: env.h trie.h stab.h
-stab.o: stab.h
+env.o: env.h trie.h
+stab.o: stab.h env.h
 trie.o: trie.h stab.h
 .PHONY: clean
 clean:

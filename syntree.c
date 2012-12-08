@@ -69,16 +69,16 @@ static void print_symbol(struct Stab *symbol, BOOL isfunc)
         int t;
         for (t = 0; t < symbol->ptrcount; t++) putchar('*');
     }
-    if (isfunc && symbol->paramcount) {
+    if (isfunc && symbol->param_cnt) {
         putchar(10);
-        printf("\tParamlist(%d): ", symbol->paramcount);
+        printf("\tParamlist(%d): ", symbol->param_cnt);
         struct Param_entry *pe;
         for (pe = symbol->param_list; pe; pe = pe->next) {
             print_symbol(pe->symbol, FALSE);
             printf(" %s\t", pe->symbol->name);
         }
-    } else if (symbol->arycount) {
-        printf(" (%d)", symbol->arycount);
+    } else if (symbol->arysize_cnt) {
+        printf(" (%d)", symbol->arysize_cnt);
         struct Arysize_entry *ae;
         for (ae = symbol->arysize_list; ae; ae = ae->next) {
             printf("[%zd]", ae->size);
