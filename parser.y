@@ -10,14 +10,14 @@
 #include "env.h"
 #include "syntree.h"
 #include "stab.h"
+
 %}
 
 %output "parser.c"
 %defines "parser.h"
 
 %initial-action {
-	global_env = curr_env = env_new(0);
-	can_create_env = TRUE;
+	global_env = curr_env = env_new(NULL);
 }
 
 %token COMMENT
@@ -139,16 +139,29 @@ global		: var_def			{ $$ = $1; }
 		;
 
 sym_insert	: SYM				{
-							STACK_PUSH(sym_stack, sym_top, env_insert(curr_env, yytext, yyget_lineno()));
+							struct Stab *symbol = env_insert(curr_env, lastsym, yyget_lineno());
+							STACK_PUSH(sym_stack, sym_top, symbol);
+						}
+
+s_sym_insert	: SYM				{
+							struct Stab *symbol = env_insert(curr_env->prev, lastsym, yyget_lineno());
+							STACK_PUSH(sym_stack, sym_top, symbol);
 						}
 
 sym_lookup	: SYM				{
-							STACK_PUSH(sym_stack, sym_top, env_lookup(curr_env, yytext));
+							struct Stab *symbol = env_lookup(curr_env, lastsym);
+							STACK_PUSH(sym_stack, sym_top, symbol);
+						}
+
+s_sym_lookup	: SYM				{
+							struct Stab *symbol = env_lookup(curr_env, prevsym);
+							STACK_PUSH(sym_stack, sym_top, symbol);
 						}
 
 type		: TYPE
-		| STRUCT SYM			{
-							STACK_PUSH(type_stack, type_top, type_new(T_STRUCT, env_lookup(global_env, yytext)));
+		| STRUCT s_sym_lookup		{
+							struct Type_info *ti = type_new(T_STRUCT, STACK_POP(sym_stack, sym_top));
+							STACK_PUSH(type_stack, type_top, ti);
 						}
 		;
 
@@ -204,14 +217,17 @@ var_def		: type idlist SEMI		{
 						}
 		;
 
-var_def_list	: var_def_list var_def		{ $$ = syntree_insert_last($1, $2); }
+var_defs	: var_defs var_def		{ $$ = syntree_insert_last($1, $2); }
 		| var_def			{ $$ = $1; }
-		|				{ $$ = 0; }
+		;
+
+var_def_list	: var_defs			{ $$ = $1; }
+		|				{ $$ = NULL; }
 		;
 
 func_head	: type id_noary			{
 							curr_env = env_new(curr_env);
-							can_create_env = FALSE;
+							has_param_list = TRUE;
 						}
 
 func_def	: func_head LPAREN param_list RPAREN block	{
@@ -220,14 +236,10 @@ func_def	: func_head LPAREN param_list RPAREN block	{
 							$$->symbol->isfunc = TRUE;
 							$$->symbol->type = STACK_POP(type_stack, type_top);	
 							$$->child[0] = $5;
-							if (!can_create_env) {
-								curr_env = curr_env->prev;
-								can_create_env = TRUE;
-							}
 						}
 		;
 
-struct_def	: STRUCT sym_insert LBRACE var_def_list RBRACE SEMI	{
+struct_def	: STRUCT s_sym_insert LBRACE var_def_list RBRACE SEMI	{
 	  	/* does not support defining struct right after struct def or without any var definition */
 							$$ = syntree_new_node(1, K_STRUCT);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
@@ -264,6 +276,7 @@ param		: type identifier		{
 		;
 
 sentence	: var_def			{ $$ = $1; }
+		| struct_def			{ $$ = $1; }
 		| stmt				{ $$ = $1; }
 		| expr SEMI			{ $$ = $1; }
 		;
@@ -275,7 +288,7 @@ sentence_list	: sentence_list sentence	{
 								syntree_insert_last($1, $2);
 							}
 						}
-		|				{ $$ = 0; }
+		|				{ $$ = NULL; }
 		;
 
 block		: LBRACE sentence_list RBRACE	{ $$ = $2; }
@@ -643,7 +656,7 @@ expr		: expr INC			{
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 						}
 		| sym_lookup LPAREN exprz RPAREN{
-		/* call funtion */
+		/* call function */
 							$$ = syntree_new_node(1, K_EXPR);
 							$$->expr = K_CALL;
 							$$->symbol = STACK_POP(sym_stack, sym_top);
@@ -653,7 +666,7 @@ expr		: expr INC			{
 		;
 
 exprz		: expr				{ $$ = $1; }
-		|				{ $$ = 0; }
+		|				{ $$ = NULL; }
 		;
 
 %%

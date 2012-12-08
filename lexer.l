@@ -141,6 +141,9 @@ static int proc(int token)
             }
             return TYPE;
         case SYM:
+            if (prevsym) free(prevsym);
+            prevsym = lastsym;
+            lastsym = strdup(yytext);
             return SYM;
         case STRING:
             return STRING;
@@ -157,14 +160,14 @@ static int proc(int token)
 	    lastval = 0;
             return INTEGER;
 	case LBRACE:
-            if (can_create_env) {
+            if (has_param_list) {
+                has_param_list = FALSE;
+            } else {
                 curr_env = env_new(curr_env);
             }
             return LBRACE;
 	case RBRACE:
-            if (can_create_env) {
-                curr_env = curr_env->prev;
-            }
+	    curr_env = curr_env->prev;
             return RBRACE;
         default:
             return token;
