@@ -19,7 +19,7 @@
 #define STACK_POP(stack, top) stack[--top]
 #define STACK_TOP(stack, top) stack[top - 1]
 
-#define LIST_ADD(list, entry) \
+#define LIST_INSERT(list, entry) \
     do { \
         typeof(list) ptr = list; \
         while (ptr->next) ptr = ptr->next; \
@@ -28,6 +28,7 @@
 
 int lastval;
 double lastdval;
+BOOL can_create_env;
 
 #endif /* !PARSER_GLOBAL_H */
 
