@@ -25,7 +25,7 @@ struct Stab *trie_insert(struct Trie_node *root, const char *name, int lineno)
         p = p->next[index];
     }
     if (p->symbol == NULL) {
-        p->symbol = stab_new_symbol(name, lineno);
+        p->symbol = stab_new(name, lineno);
         return p->symbol;
     }
 

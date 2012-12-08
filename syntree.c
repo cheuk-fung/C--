@@ -54,35 +54,37 @@ static void print_child(struct Syntree_node *node)
     putchar(10);
 }
 
-static void print_symbol(struct Stab *symbol, BOOL isfunc)
+static void print_symbol(struct Stab *symbol, enum Node_kind nkind)
 {
-    switch (symbol->type) {
+    switch (symbol->type->kind) {
         case T_VOID: printf("void"); break;
         case T_INT: printf("int"); break;
         case T_CHAR: printf("char"); break;
         case T_FLOAT: printf("float"); break;
         case T_DOUBLE: printf("double"); break;
-        case T_STRUCT: /* TODO */ break;
+        case T_STRUCT: printf("struct %s", symbol->type->struct_sym->name);
     }
     if (symbol->ptrcount) {
         printf(" (%d)", symbol->ptrcount);
         int t;
         for (t = 0; t < symbol->ptrcount; t++) putchar('*');
     }
-    if (isfunc && symbol->param_cnt) {
+    if (nkind == K_FUNC && symbol->param_cnt) {
         putchar(10);
         printf("\tParamlist(%d): ", symbol->param_cnt);
         struct Param_entry *pe;
         for (pe = symbol->param_list; pe; pe = pe->next) {
-            print_symbol(pe->symbol, FALSE);
+            print_symbol(pe->symbol, K_DEF);
             printf(" %s\t", pe->symbol->name);
         }
-    } else if (symbol->arysize_cnt) {
+    } else if (nkind == K_DEF && symbol->arysize_cnt) {
         printf(" (%d)", symbol->arysize_cnt);
         struct Arysize_entry *ae;
         for (ae = symbol->arysize_list; ae; ae = ae->next) {
             printf("[%zd]", ae->size);
         }
+    } else if (nkind == K_STRUCT) {
+        printf(" (%d)\t", symbol->member_cnt);
     }
 }
 
@@ -96,16 +98,21 @@ int syntree_translate(struct Syntree_node *root)
         switch (node->nkind) {
             case K_FUNC:
                 printf("Function definition:\t");
-                print_symbol(node->symbol, TRUE);
+                print_symbol(node->symbol, K_FUNC);
                 printf("\tsymbol: %s\t", node->symbol->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
                 break;
             case K_STRUCT:
+                printf("Struct definition:\t");
+                print_symbol(node->symbol, K_STRUCT);
+                printf("\tsymbol: %s\t", node->symbol->name);
+                print_child(node);
+                syntree_translate(node->child[0]);
                 break;
             case K_DEF:
                 printf("Var definition: ");
-                print_symbol(node->symbol, FALSE);
+                print_symbol(node->symbol, K_DEF);
                 printf("\tsymbol: %s\t", node->symbol->name);
                 print_child(node);
                 break;
@@ -178,6 +185,11 @@ int syntree_translate(struct Syntree_node *root)
                         print_child(node);
                         syntree_translate(node->child[0]);
                         syntree_translate(node->child[1]);
+                        break;
+                    case K_CALL:
+                        printf("Function call symbol\t%s\t", node->symbol->name);
+                        print_child(node);
+                        syntree_translate(node->child[0]);
                         break;
                     case K_OPR:
                         printf("Operation expression:\t");
@@ -435,6 +447,11 @@ int syntree_translate(struct Syntree_node *root)
                                 puts("expression 2:");
                                 syntree_translate(node->child[1]);
                                 break;
+                            case COMMA:
+                                printf("OP:\t,\t");
+                                print_child(node);
+                                syntree_translate(node->child[0]);
+                                syntree_translate(node->child[1]);
                             default:
                                 break;
                         }

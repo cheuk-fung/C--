@@ -146,6 +146,12 @@ sym_lookup	: SYM				{
 							STACK_PUSH(sym_stack, sym_top, env_lookup(curr_env, yytext));
 						}
 
+type		: TYPE
+		| STRUCT SYM			{
+							STACK_PUSH(type_stack, type_top, type_new(T_STRUCT, env_lookup(global_env, yytext)));
+						}
+		;
+
 pointer		: MULTIPLY sym_insert		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
@@ -191,27 +197,24 @@ idlist		: idlist COMMA identifier	{
 						}
 		;
 
-var_def		: TYPE idlist SEMI		{
+var_def		: type idlist SEMI		{
 	 	/* does not support define with initialization */
 							$$ = $2;
 							STACK_POP(type_stack, type_top);
 						}
 		;
 
-var_def_list	: var_def_list var_def		{
-							$$ = syntree_insert_last($1, $2);
-						}
-		| var_def			{
-							$$ = $1;
-						}
+var_def_list	: var_def_list var_def		{ $$ = syntree_insert_last($1, $2); }
+		| var_def			{ $$ = $1; }
+		|				{ $$ = 0; }
 		;
 
-func_head	: TYPE id_noary			{
+func_head	: type id_noary			{
 							curr_env = env_new(curr_env);
 							can_create_env = FALSE;
 						}
 
-func_def	: func_head LPAREN params RPAREN block	{
+func_def	: func_head LPAREN param_list RPAREN block	{
 							$$ = syntree_new_node(1, K_FUNC);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->symbol->isfunc = TRUE;
@@ -225,16 +228,23 @@ func_def	: func_head LPAREN params RPAREN block	{
 		;
 
 struct_def	: STRUCT sym_insert LBRACE var_def_list RBRACE SEMI	{
-		/* TODO */
 	  	/* does not support defining struct right after struct def or without any var definition */
+							$$ = syntree_new_node(1, K_STRUCT);
+							$$->symbol = STACK_POP(sym_stack, sym_top);
+							$$->symbol->type = type_new(T_STRUCT, $$->symbol);
+							if ($4) {
+								$$->symbol->member_cnt = $4->env->symbol_cnt;
+								$$->symbol->member_env = $4->env;
+							}
+							$$->child[0] = $4;
 						}
 		;
 
-params		: param_list
+param_list	: params
 		|
 		;
 
-param_list	: param_list COMMA param	{
+params		: params COMMA param		{
 							struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->param_cnt++;
@@ -248,7 +258,7 @@ param_list	: param_list COMMA param	{
 						}
 		;
 
-param		: TYPE identifier		{
+param		: type identifier		{
 							STACK_POP(type_stack, type_top);
 						}
 		;
@@ -599,6 +609,13 @@ expr		: expr INC			{
 							$$->expr = K_OPR;
 							$$->token = ORASN;
 						}
+		| expr COMMA expr		{
+							$$ = syntree_new_node(2, K_EXPR);
+							$$->child[0] = $1;
+							$$->child[1] = $3;
+							$$->expr = K_OPR;
+							$$->token = COMMA;
+						}
 		| STRING			{
 							$$ = syntree_new_node(0, K_EXPR);
 							$$->expr = K_STR;
@@ -625,29 +642,18 @@ expr		: expr INC			{
 							$$->expr = K_SYM;
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 						}
-		| call_func			{ $$ = $1; }
-		/* TODO: COMMA, IFF */
+		| sym_lookup LPAREN exprz RPAREN{
+		/* call funtion */
+							$$ = syntree_new_node(1, K_EXPR);
+							$$->expr = K_CALL;
+							$$->symbol = STACK_POP(sym_stack, sym_top);
+							$$->child[0] = $3;
+						}
+		/* TODO: IFF */
 		;
 
 exprz		: expr				{ $$ = $1; }
 		|				{ $$ = 0; }
-		;
-
-call_func	: sym_lookup LPAREN args RPAREN	{
-		/* TODO */
-						}
-		;
-
-args		: arg_list			{
-		/* TODO */
-						}
-		|
-		;
-
-arg_list	: arg_list COMMA expr		{
-		/* TODO */
-						}
-		| expr
 		;
 
 %%

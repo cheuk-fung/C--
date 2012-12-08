@@ -133,11 +133,11 @@ static int proc(int token)
             return NEWLINE;
         case TYPE:
             switch (yytext[0]) {
-                case 'v': STACK_PUSH(type_stack, type_top, T_VOID); break;
-                case 'c': STACK_PUSH(type_stack, type_top, T_CHAR); break;
-                case 'i': STACK_PUSH(type_stack, type_top, T_INT); break;
-                case 'f': STACK_PUSH(type_stack, type_top, T_FLOAT); break;
-                case 'd': STACK_PUSH(type_stack, type_top, T_DOUBLE); break;
+                case 'v': STACK_PUSH(type_stack, type_top, type_new(T_VOID, NULL)); break;
+                case 'c': STACK_PUSH(type_stack, type_top, type_new(T_CHAR, NULL)); break;
+                case 'i': STACK_PUSH(type_stack, type_top, type_new(T_INT, NULL)); break;
+                case 'f': STACK_PUSH(type_stack, type_top, type_new(T_FLOAT, NULL)); break;
+                case 'd': STACK_PUSH(type_stack, type_top, type_new(T_DOUBLE, NULL));
             }
             return TYPE;
         case SYM:

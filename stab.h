@@ -20,11 +20,16 @@ struct Param_entry {
     struct Param_entry *next;
 };
 
+struct Type_info {
+    enum Type_kind kind;
+    struct Stab *struct_sym;
+};
+
 struct Stab {
     char *name;
     int addr;			// given during translation
     int lineno; 		// declaration line
-    enum Type_kind type;
+    struct Type_info *type;
     BOOL isfunc;
     int ptrcount;
     union {
@@ -40,14 +45,15 @@ struct Stab {
 };
 
 extern int type_top;
-enum Type_kind type_stack[MAX_STACK_SIZE];
+struct Type_info *type_stack[MAX_STACK_SIZE];
 
 extern int sym_top;
 struct Stab *sym_stack[MAX_STACK_SIZE];
 
-struct Stab *stab_new_symbol(const char *, int);
+struct Stab *stab_new(const char *, int);
 struct Arysize_entry *arysize_new(size_t);
 struct Param_entry *param_new(struct Stab *);
+struct Type_info *type_new(enum Type_kind, struct Stab *);
 
 #endif /* !PARSER_STAB_H */
 

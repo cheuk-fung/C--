@@ -5,7 +5,7 @@
 int type_top = 0;
 int sym_top = 0;
 
-struct Stab *stab_new_symbol(const char *name, int lineno)
+struct Stab *stab_new(const char *name, int lineno)
 {
     struct Stab *symbol = (struct Stab *)malloc(sizeof(struct Stab));
     memset(symbol, 0, sizeof(struct Stab));
@@ -28,5 +28,13 @@ struct Param_entry *param_new(struct Stab *symbol)
     pe->symbol = symbol;
     pe->next = NULL;
     return pe;
+}
+
+struct Type_info *type_new(enum Type_kind kind, struct Stab *struct_sym)
+{
+    struct Type_info *ti = (struct Type_info *)malloc(sizeof(struct Type_info));
+    ti->kind = kind;
+    ti->struct_sym = struct_sym;
+    return ti;
 }
 

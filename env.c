@@ -19,12 +19,19 @@ struct Env *env_new(struct Env *prev)
 struct Stab *env_insert(struct Env *e, const char *name, int lineno)
 {
     if (e->trie_root == NULL) e->trie_root = trie_new_node();
-    return trie_insert(e->trie_root, name, lineno);
+    struct Stab *symbol = trie_insert(e->trie_root, name, lineno);
+    if (symbol) e->symbol_cnt++;
+    return symbol;
 }
 
 struct Stab *env_lookup(struct Env *e, const char *name)
 {
-    if (e->trie_root == NULL) return NULL;
-    return trie_lookup(e->trie_root, name);
+    for ( ; e; e = e->prev) {
+        if (e->trie_root != NULL) {
+            struct Stab *symbol = trie_lookup(e->trie_root, name);
+            if (symbol) return symbol;
+        }
+    }
+    return NULL;
 }
 
