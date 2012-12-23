@@ -30,7 +30,6 @@ int lastval;
 double lastdval;
 char *prevsym;
 char *lastsym;
-BOOL has_param_list;
 
 #endif /* !PARSER_GLOBAL_H */
 

@@ -159,16 +159,6 @@ static int proc(int token)
         case _NULL:
 	    lastval = 0;
             return INTEGER;
-	case LBRACE:
-            if (has_param_list) {
-                has_param_list = FALSE;
-            } else {
-                curr_env = env_new(curr_env);
-            }
-            return LBRACE;
-	case RBRACE:
-	    curr_env = curr_env->prev;
-            return RBRACE;
         default:
             return token;
     }

@@ -138,13 +138,14 @@ global		: var_def			{ $$ = $1; }
 		| struct_def			{ $$ = $1; }
 		;
 
+env_enter	:				{ curr_env = env_new(curr_env); }
+		;
+
+env_leave	:				{ curr_env = curr_env->prev; }
+		;
+
 sym_insert	: SYM				{
 							struct Stab *symbol = env_insert(curr_env, lastsym, yyget_lineno());
-							STACK_PUSH(sym_stack, sym_top, symbol);
-						}
-
-s_sym_insert	: SYM				{
-							struct Stab *symbol = env_insert(curr_env->prev, lastsym, yyget_lineno());
 							STACK_PUSH(sym_stack, sym_top, symbol);
 						}
 
@@ -225,30 +226,25 @@ var_def_list	: var_defs			{ $$ = $1; }
 		|				{ $$ = NULL; }
 		;
 
-func_head	: type id_noary			{
-							curr_env = env_new(curr_env);
-							has_param_list = TRUE;
-						}
-
-func_def	: func_head LPAREN param_list RPAREN block	{
+func_def	: type id_noary env_enter LPAREN param_list RPAREN block env_leave	{
 							$$ = syntree_new_node(1, K_FUNC);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->symbol->isfunc = TRUE;
 							$$->symbol->type = STACK_POP(type_stack, type_top);	
-							$$->child[0] = $5;
+							$$->child[0] = $7;
 						}
 		;
 
-struct_def	: STRUCT s_sym_insert LBRACE var_def_list RBRACE SEMI	{
+struct_def	: STRUCT sym_insert env_enter LBRACE var_def_list RBRACE env_leave SEMI	{
 	  	/* does not support defining struct right after struct def or without any var definition */
 							$$ = syntree_new_node(1, K_STRUCT);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->symbol->type = type_new(T_STRUCT, $$->symbol);
-							if ($4) {
-								$$->symbol->member_cnt = $4->env->symbol_cnt;
-								$$->symbol->member_env = $4->env;
+							if ($5) {
+								$$->symbol->member_cnt = $5->env->symbol_cnt;
+								$$->symbol->member_env = $5->env;
 							}
-							$$->child[0] = $4;
+							$$->child[0] = $5;
 						}
 		;
 
@@ -314,10 +310,10 @@ stmt		: IF LPAREN expr RPAREN sentence ELSE sentence %prec ELSE	{
 							$$->child[1] = $5;
 							$$->stmt = K_WHILE;
 						}
-		| DO block WHILE LPAREN expr RPAREN SEMI	{
+		| DO env_enter block env_leave WHILE LPAREN expr RPAREN SEMI	{
 							$$ = syntree_new_node(2, K_STMT);
-							$$->child[0] = $2;
-							$$->child[1] = $5;
+							$$->child[0] = $3;
+							$$->child[1] = $7;
 							$$->stmt = K_DO;
 						}
 		| FOR LPAREN exprz SEMI exprz SEMI exprz RPAREN sentence	{
@@ -333,7 +329,7 @@ stmt		: IF LPAREN expr RPAREN sentence ELSE sentence %prec ELSE	{
 							$$->child[0] = $2;
 							$$->stmt = K_RET;
 						}
-		| block				{ $$ = $1; }
+		| env_enter block env_leave	{ $$ = $2; }
 		/* TODO: SWEITCH, GOTO */
 		;
 
