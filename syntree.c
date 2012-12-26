@@ -211,29 +211,29 @@ int syntree_translate(struct Syntree_node *root)
                                 syntree_translate(node->child[0]);
                                 break;
                             case DOT:
-                                fputs("Struct get member:", stderr);
-                                fputs("expr:", stderr);
+                                fputs("Struct get member:\n", stderr);
+                                fputs("expr:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("member id:", stderr);
+                                fputs("member id:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case MEMBER:
-                                fputs("Struct pointer get member:", stderr);
-                                fputs("expr:", stderr);
+                                fputs("Struct pointer get member:\n", stderr);
+                                fputs("expr:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("member id:", stderr);
+                                fputs("member id:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case PINC:
-                                fputs("Prefix INC expression:", stderr);
+                                fputs("Prefix INC expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case PDEC:
-                                fputs("Prefix DEC expression:", stderr);
+                                fputs("Prefix DEC expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case UPLUS:
-                                fputs("Unary + expression:", stderr);
+                                fputs("Unary + expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case UMINUS:
@@ -242,33 +242,33 @@ int syntree_translate(struct Syntree_node *root)
                                 syntree_translate(node->child[0]);
                                 break;
                             case LNOT:
-                                fputs("Logical NOT expression:", stderr);
+                                fputs("Logical NOT expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case NOT:
-                                fputs("Arithmetic NOT expression:", stderr);
+                                fputs("Arithmetic NOT expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case PTR:
-                                fputs("Pointer expression:", stderr);
+                                fputs("Pointer expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case REFR:
-                                fputs("Reference expression:", stderr);
+                                fputs("Reference expression:\n", stderr);
                                 syntree_translate(node->child[0]);
                                 break;
                             case MULTIPLY:
-                                fputs("Multiply expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("Multiply expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case DIVIDE:
-                                fputs("DIVIDE expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("DIVIDE expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case MOD:
@@ -290,17 +290,17 @@ int syntree_translate(struct Syntree_node *root)
                                 syntree_translate(node->child[1]);
                                 break;
                             case SHL:
-                                fputs("SHL expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("SHL expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case SHR:
-                                fputs("SHR expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("SHR expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case LT:
@@ -310,24 +310,24 @@ int syntree_translate(struct Syntree_node *root)
                                 syntree_translate(node->child[1]);
                                 break;
                             case LE:
-                                fputs("LE expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("LE expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case GT:
-                                fputs("GT expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("GT expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case GE:
-                                fputs("GE expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("GE expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case EQ:
@@ -337,45 +337,45 @@ int syntree_translate(struct Syntree_node *root)
                                 syntree_translate(node->child[1]);
                                 break;
                             case NE:
-                                fputs("NE expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("NE expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case AND:
-                                fputs("Arithmetic AND expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("Arithmetic AND expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case XOR:
-                                fputs("Arithmetic XOR expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("Arithmetic XOR expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case OR:
-                                fputs("Arithmetic OR expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("Arithmetic OR expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case LAND:
-                                fputs("Logical AND expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("Logical AND expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case LOR:
-                                fputs("Logical OR expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("Logical OR expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case ASSIGN:
@@ -385,72 +385,72 @@ int syntree_translate(struct Syntree_node *root)
                                 syntree_translate(node->child[1]);
                                 break;
                             case PLUSASN:
-                                fputs("PLUS and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("PLUS and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                             case MINUSASN:
-                                fputs("MINUS and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("MINUS and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case MULASN:
-                                fputs("MULTIPLY and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("MULTIPLY and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case DIVASN:
-                                fputs("DIVIDE and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("DIVIDE and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case MODASN:
-                                fputs("MOD and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("MOD and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case SHLASN:
-                                fputs("SHL and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("SHL and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case SHRASN:
-                                fputs("SHR and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("SHR and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case ANDASN:
-                                fputs("AND and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("AND and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case XORASN:
-                                fputs("XOR and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("XOR and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case ORASN:
-                                fputs("OR and ASSIGN expression:", stderr);
-                                fputs("expression 1:", stderr);
+                                fputs("OR and ASSIGN expression:\n", stderr);
+                                fputs("expression 1:\n", stderr);
                                 syntree_translate(node->child[0]);
-                                fputs("expression 2:", stderr);
+                                fputs("expression 2:\n", stderr);
                                 syntree_translate(node->child[1]);
                                 break;
                             case COMMA:
