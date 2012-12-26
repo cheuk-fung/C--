@@ -118,7 +118,7 @@
 %%
 
 program		: code				{
-							printf("node id(env id):\tDescription\tChildren\n");
+							fprintf(stderr, "node id(env id):\tDescription\tChildren\n");
 							syntree_translate($1);
 #ifdef NGDEBUG
 							assert(sym_top == 0);
