@@ -10,7 +10,11 @@
 
 static int nodeid_count = 0;
 
-struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind)
+static void syntree_type_check(struct Syntree_node *node)
+{
+}
+
+struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enum Type_kind ntype)
 {
     struct Syntree_node *node = (struct Syntree_node *)malloc(sizeof(struct Syntree_node));
     node->child_count = child_count;
@@ -24,6 +28,8 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind)
     node->env = curr_env;
     node->lineno = yyget_lineno();
     node->nkind = nkind;
+    node->ntype = ntype;
+    syntree_type_check(node);
 
     node->nodeid = nodeid_count++;
 
@@ -172,7 +178,7 @@ int syntree_translate(struct Syntree_node *root)
                         fprintf(stderr, "Integer constant:\t%d\t", node->val);
                         print_child(node);
                         break;
-                    case K_FLOAT:
+                    case K_DOUBLE:
                         fprintf(stderr, "Float point constant:\t%lf\t", node->dval);
                         print_child(node);
                         break;
