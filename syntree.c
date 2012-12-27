@@ -12,6 +12,10 @@ static int nodeid_count = 0;
 
 static void syntree_type_check(struct Syntree_node *node)
 {
+    if (node->ntype != T_VOID) return ;
+    if (node->nkind == K_STMT) {
+    } else if (node->nkind == K_EXPR) {
+    }
 }
 
 struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enum Type_kind ntype)
@@ -158,7 +162,7 @@ int syntree_translate(struct Syntree_node *root)
                         syntree_translate(node->child[3]);
                         break;
                     case K_RET:
-                        fprintf(stderr, "Return statement:\t");
+                        fprintf(stderr, "Return statement of %s:\t", node->symbol->name);
                         print_child(node);
                         syntree_translate(node->child[0]);
                         break;
