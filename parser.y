@@ -11,7 +11,6 @@
 #include "syntree.h"
 #include "stab.h"
 
-struct Stab *currfunc;
 %}
 
 %output "parser.c"
@@ -231,17 +230,12 @@ var_def_list	: var_defs			{ $$ = $1; }
 		|				{ $$ = NULL; }
 		;
 
-func_head	: type id_noary 	{
+func_def	: type id_noary env_enter LPAREN param_list RPAREN block env_leave	{
 							$$ = syntree_new_node(1, K_FUNC, T_FUNC);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->symbol->isfunc = TRUE;
 							$$->symbol->type = STACK_POP(type_stack, type_top);	
-							currfunc = $$->symbol;
-						}
-func_def	: func_head env_enter LPAREN param_list RPAREN block env_leave	{
-							$$ = $1;
-							$$->child[0] = $6;
-							currfunc = NULL;
+							$$->child[0] = $7;
 						}
 		;
 
@@ -264,19 +258,15 @@ param_list	: params
 
 params		: params COMMA param		{
 							struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
-#ifdef NGDEBUG
-							assert(currfunc != NULL);
-#endif
-							currfunc->param_cnt++;
-							LIST_INSERT(currfunc->param_list, pe);
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+							symbol->param_cnt++;
+							LIST_INSERT(symbol->param_list, pe);
 						}
 		| param				{
 							struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
-#ifdef NGDEBUG
-							assert(currfunc != NULL);
-#endif
-							currfunc->param_cnt = 1;
-							currfunc->param_list = pe;
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+							symbol->param_cnt = 1;
+							symbol->param_list = pe;
 						}
 		;
 
@@ -289,6 +279,7 @@ sentence	: var_def			{ $$ = $1; }
 		| struct_def			{ $$ = $1; }
 		| stmt				{ $$ = $1; }
 		| expr SEMI			{ $$ = $1; }
+		| SEMI
 		;
 
 sentence_list	: sentence_list sentence	{
@@ -342,10 +333,7 @@ stmt		: IF LPAREN expr RPAREN sentence ELSE sentence %prec ELSE	{
 							$$ = syntree_new_node(1, K_STMT, T_VOID);
 							$$->child[0] = $2;
 							$$->stmt = K_RET;
-#ifdef NGDEBUG
-							assert(currfunc != NULL);
-#endif
-							$$->symbol = currfunc;
+							$$->symbol = STACK_TOP(sym_stack, sym_top);
 						}
 		| env_enter block env_leave	{ $$ = $2; }
 		/* TODO: SWEITCH, GOTO */
@@ -643,11 +631,13 @@ expr		: expr INC			{
 							$$->expr = K_OPR;
 							$$->token = COMMA;
 						}
+/* TODO
 		| STRING			{
 							$$ = syntree_new_node(0, K_EXPR, T_STR);
 							$$->expr = K_STR;
 							$$->str = strdup(yytext);
 						}
+*/
 		| CHARACTER			{
 							$$ = syntree_new_node(0, K_EXPR, T_CHAR);
 							$$->expr = K_CHAR;
