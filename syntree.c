@@ -7,21 +7,19 @@
 #include "global.h"
 #include "lexer.h"
 #include "syntree.h"
+#include "stab.h"
 
 FILE *fmsg;
 static int nodeid_count = 0;
 
 static void syntree_type_check(struct Syntree_node *node)
 {
-    if (node->ntype != T_VOID) return ;
+    if (node->ntype.kind != T_VOID) return ;
     if (node->nkind == K_STMT) {
         switch (node->se.stmt) {
             case K_IFELSE: case K_IF:
             case K_WHILE:
-                if (node->child[0]->ntype == T_STR || node->child[0]->ntype == T_STRUCT) {
-                    fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
-                    exit(1);
-                } else if (node->child[0]->ntype == T_CALL && node->child[0]->info.symbol->type->kind >= T_VOID) {
+                if (node->child[0]->ntype.kind >= T_VOID) {
                     fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                     exit(1);
                 }
@@ -33,28 +31,18 @@ static void syntree_type_check(struct Syntree_node *node)
                         exit(1);
                     }
                 } else if (node->info.symbol->type->kind < T_VOID) {
-                    if (
-                            (node->child[0]->ntype == T_CALL && node->child[0]->info.symbol->type->kind >= T_VOID) ||
-                            node->child[0]->ntype >= T_VOID
-                       ) {
+                    if (node->child[0]->ntype.kind >= T_VOID) {
                         fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                         exit(1);
                     }
-                    node->child[0]->ntype = node->info.symbol->type->kind;
+                    node->child[0]->ntype = *(node->info.symbol->type);
                 } else if (node->info.symbol->type->kind == T_VOID) {
-                    if (
-                            (node->child[0]->ntype == T_CALL && node->child[0]->info.symbol->type->kind != T_VOID) ||
-                            node->child[0]->ntype != T_VOID
-                       ) {
+                    if (node->child[0]->ntype.kind != T_VOID) {
                         fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                         exit(1);
                     }
                 } else if (node->info.symbol->type->kind == T_STRUCT) {
-                    if (
-                            (node->child[0]->ntype == T_CALL && (node->child[0]->info.symbol->type->kind != T_STRUCT || node->child[0]->info.symbol->type->struct_sym != node->info.symbol->type->struct_sym)) ||
-                            node->child[0]->ntype != T_STRUCT ||
-                            node->child[0]->info.symbol->type->struct_sym != node->info.symbol->type->struct_sym
-                       ) {
+                    if (node->child[0]->ntype.kind != T_STRUCT || node->child[0]->ntype.struct_sym != node->info.symbol->type->struct_sym) {
                         fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                         exit(1);
                     }
@@ -63,8 +51,59 @@ static void syntree_type_check(struct Syntree_node *node)
                     exit(1);
                 }
                 break;
+            case K_FOR: break;
+            case K_DO: /* TODO */
+            default:
+                        fprintf(stderr, "C-- currently does not support line %d now.\n", node->lineno);
+                        exit(1);
         }
     } else if (node->nkind == K_EXPR) {
+        switch (node->se.expr) {
+            case K_OPR: {
+                            break;
+                        }
+            case K_ARY: {
+                            break;
+                        }
+            case K_CALL: {
+                             struct Param_entry *pe = node->info.symbol->param_list;
+                             if (node->child[0] == NULL) {
+                                 if (pe != NULL) {
+                                     fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                     exit(1);
+                                 }
+                             } else if (pe == NULL) {
+                                 fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                 exit(1);
+                             } else {
+                                 struct Syntree_node *sn = node->child[0];
+                                 while (sn->nkind == K_EXPR && sn->se.expr == K_OPR && sn->info.token == COMMA && pe->next) {
+                                     if (sn->child[0]->ntype.kind != pe->symbol->type->kind || sn->child[0]->ntype.struct_sym != pe->symbol->type->struct_sym) {
+                                         fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                         exit(1);
+                                     }
+                                     sn = sn->child[1];
+                                     pe = pe->next;
+                                 }
+#ifdef NGDEBUG
+                                 assert(pe);
+#endif
+                                 if ((sn->nkind == K_EXPR && sn->se.expr == K_OPR && sn->info.token == COMMA) || pe->next) {
+                                     fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                     exit(1);
+                                 }
+                                 if (sn->ntype.kind != pe->symbol->type->kind || sn->ntype.struct_sym != pe->symbol->type->struct_sym) {
+                                     fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                     exit(1);
+                                 }
+                             }
+                             node->ntype = *(node->info.symbol->type);
+                             break;
+                         }
+            default:
+                         fprintf(stderr, "There must be something wrong at line %d.\n", node->lineno);
+                         exit(1);
+        }
     }
 }
 
@@ -83,7 +122,10 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enu
     node->env = curr_env;
     node->lineno = yyget_lineno();
     node->nkind = nkind;
-    node->ntype = ntype;
+    node->ntype.kind = ntype;
+    if (nkind == K_STRUCT && ntype == T_STRUCT) {
+        node->ntype.struct_sym = ((struct Stab *)info)->type->struct_sym;
+    }
     node->se = (union SE_kind)se;
     if (nkind == K_DOUBLE && ntype == T_DOUBLE) {
         node->info.dval = lastdval;

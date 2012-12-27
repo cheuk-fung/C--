@@ -34,7 +34,7 @@ struct Syntree_node {
     struct Env *env;
     int lineno;
     enum Node_kind nkind;
-    enum Type_kind ntype;
+    struct Type_info ntype;
     union SE_kind se;
     union Information info;
 

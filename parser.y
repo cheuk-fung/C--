@@ -303,11 +303,9 @@ stmt		: IF LPAREN expr RPAREN sentence ELSE sentence %prec ELSE	{
 		| WHILE LPAREN expr RPAREN sentence	{
 							$$ = syntree_new_node(2, K_STMT, T_VOID, (void *)K_WHILE, NULL, $3, $5, 0, 0);
 						}
-/* TODO
 		| DO env_enter block env_leave WHILE LPAREN expr RPAREN SEMI	{
 							$$ = syntree_new_node(2, K_STMT, T_VOID, (void *)K_DO, NULL, $3, $7, 0, 0);
 						}
-*/
 		| FOR LPAREN exprz SEMI exprz SEMI exprz RPAREN sentence	{
 							$$ = syntree_new_node(4, K_STMT, T_VOID, (void *)K_FOR, NULL, $3, $5, $7, $9);
 						}
@@ -475,7 +473,7 @@ expr		: expr INC			{
 		| sym_lookup LPAREN exprz RPAREN{
 		/* call function */
 							struct Stab *symbol = STACK_POP(sym_stack, sym_top);
-							$$ = syntree_new_node(1, K_EXPR, T_CALL, (void *)K_CALL, (void *)symbol, $3, 0, 0, 0);
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_CALL, (void *)symbol, $3, 0, 0, 0);
 						}
 		/* TODO: IFF */
 		;
