@@ -119,8 +119,10 @@ struct Stab *currfunc;
 %%
 
 program		: code				{
-							fprintf(stderr, "node id(env id):\tDescription\tChildren\n");
+							fmsg = fopen("msg.out", "w");
+							fprintf(fmsg, "node id(env id):\tDescription\tChildren\n");
 							syntree_translate($1);
+							fclose(fmsg);
 #ifdef NGDEBUG
 							assert(sym_top == 0);
 							assert(type_top == 0);
