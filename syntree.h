@@ -36,7 +36,8 @@ struct Syntree_node {
 
 extern FILE *fmsg;
 
-struct Syntree_node *syntree_new_node(int, enum Node_kind, enum Type_kind);
+struct Syntree_node *syntree_new_node(int, enum Node_kind, enum Type_kind,
+        struct Syntree_node *, struct Syntree_node *, struct Syntree_node *, struct Syntree_node *);
 struct Syntree_node *syntree_insert_last(struct Syntree_node *, struct Syntree_node *);
 int syntree_translate(struct Syntree_node *);
 

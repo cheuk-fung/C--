@@ -204,13 +204,13 @@ identifier	: id_noary
 
 idlist		: idlist COMMA identifier	{
 							struct Type_info *ti = STACK_TOP(type_stack, type_top);
-							struct Syntree_node *t = syntree_new_node(0, K_DEF, ti->kind);
+							struct Syntree_node *t = syntree_new_node(0, K_DEF, ti->kind, 0, 0, 0, 0);
 							t->symbol = STACK_POP(sym_stack, sym_top);
 							$$ = syntree_insert_last($1, t);
 						}
 		| identifier			{
 							struct Type_info *ti = STACK_TOP(type_stack, type_top);
-							$$ = syntree_new_node(0, K_DEF, ti->kind);
+							$$ = syntree_new_node(0, K_DEF, ti->kind, 0, 0, 0, 0);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 						}
 		;
@@ -231,24 +231,22 @@ var_def_list	: var_defs			{ $$ = $1; }
 		;
 
 func_def	: type id_noary env_enter LPAREN param_list RPAREN block env_leave	{
-							$$ = syntree_new_node(1, K_FUNC, T_FUNC);
+							$$ = syntree_new_node(1, K_FUNC, T_FUNC, $7, 0, 0, 0);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->symbol->isfunc = TRUE;
 							$$->symbol->type = STACK_POP(type_stack, type_top);	
-							$$->child[0] = $7;
 						}
 		;
 
 struct_def	: STRUCT sym_insert env_enter LBRACE var_def_list RBRACE env_leave SEMI	{
 	  	/* does not support defining struct right after struct def or without any var definition */
-							$$ = syntree_new_node(1, K_STRUCT, T_STRUCT);
+							$$ = syntree_new_node(1, K_STRUCT, T_STRUCT, $5, 0, 0, 0);
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->symbol->type = type_new(T_STRUCT, $$->symbol);
 							if ($5) {
 								$$->symbol->member_cnt = $5->env->symbol_cnt;
 								$$->symbol->member_env = $5->env;
 							}
-							$$->child[0] = $5;
 						}
 		;
 
@@ -296,42 +294,28 @@ block		: LBRACE sentence_list RBRACE	{ $$ = $2; }
 		;
 
 stmt		: IF LPAREN expr RPAREN sentence ELSE sentence %prec ELSE	{
-							$$ = syntree_new_node(3, K_STMT, T_VOID);
-							$$->child[0] = $3;
-							$$->child[1] = $5;
-							$$->child[2] = $7;
+							$$ = syntree_new_node(3, K_STMT, T_VOID, $3, $5, $7, 0);
 							$$->stmt = K_IFELSE;
 						}
 		| IF LPAREN expr RPAREN sentence %prec NOELSE	{
-							$$ = syntree_new_node(2, K_STMT, T_VOID);
-							$$->child[0] = $3;
-							$$->child[1] = $5;
+							$$ = syntree_new_node(2, K_STMT, T_VOID, $3, $5, 0, 0);
 							$$->stmt = K_IF;
 						}
 
 		| WHILE LPAREN expr RPAREN sentence	{
-							$$ = syntree_new_node(2, K_STMT, T_VOID);
-							$$->child[0] = $3;
-							$$->child[1] = $5;
+							$$ = syntree_new_node(2, K_STMT, T_VOID, $3, $5, 0, 0);
 							$$->stmt = K_WHILE;
 						}
 		| DO env_enter block env_leave WHILE LPAREN expr RPAREN SEMI	{
-							$$ = syntree_new_node(2, K_STMT, T_VOID);
-							$$->child[0] = $3;
-							$$->child[1] = $7;
+							$$ = syntree_new_node(2, K_STMT, T_VOID, $3, $7, 0, 0);
 							$$->stmt = K_DO;
 						}
 		| FOR LPAREN exprz SEMI exprz SEMI exprz RPAREN sentence	{
-							$$ = syntree_new_node(4, K_STMT, T_VOID);
-							$$->child[0] = $3;
-							$$->child[1] = $5;
-							$$->child[2] = $7;
-							$$->child[3] = $9;
+							$$ = syntree_new_node(4, K_STMT, T_VOID, $3, $5, $7, $9);
 							$$->stmt = K_FOR;
 						}
 		| RETURN expr SEMI		{
-							$$ = syntree_new_node(1, K_STMT, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_STMT, T_VOID, $2, 0, 0, 0);
 							$$->stmt = K_RET;
 							$$->symbol = STACK_TOP(sym_stack, sym_top);
 						}
@@ -340,332 +324,255 @@ stmt		: IF LPAREN expr RPAREN sentence ELSE sentence %prec ELSE	{
 		;
 
 expr		: expr INC			{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $1;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $1, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = INC;
 						}
 		| expr DEC			{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $1;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $1, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = DEC;
 						}
 		| LPAREN expr RPAREN		{ $$ = $2; }
 		| expr LSBRAC expr RSBRAC	{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_ARY;
 							$$->symbol = $1->symbol;
 						}
 		| expr DOT expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $2;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $2, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = DOT;
 						}
 		| expr MEMBER expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $2;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $2, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MEMBER;
 						}
 		| INC expr %prec PINC		{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = PINC;
 						}
 		| DEC expr %prec PDEC		{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = PDEC;
 						}
 		| PLUS expr %prec UPLUS		{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = UPLUS;
 						}
 		| MINUS expr %prec UMINUS	{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = UMINUS;
 						}
 		| LNOT expr			{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = LNOT;
 						}
 		| NOT expr			{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = NOT;
 						}
 		| MULTIPLY expr %prec PTR	{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = PTR;
 						}
 		| AND expr %prec REFR		{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID);
-							$$->child[0] = $2;
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, $2, 0, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = REFR;
 						}
 		| expr MULTIPLY expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MULTIPLY;
 						}
 		| expr DIVIDE expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = DIVIDE;
 						}
 		| expr MOD expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MOD;
 						}
 		| expr PLUS expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = PLUS;
 						}
 		| expr MINUS expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MINUS;
 						}
 		| expr SHL expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = SHL;
 						}
 		| expr SHR expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = SHR;
 						}
 		| expr LT expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = LT;
 						}
 		| expr LE expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = LE;
 						}
 		| expr GT expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = GT;
 						}
 		| expr GE expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = GE;
 						}
 		| expr EQ expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = EQ;
 						}
 		| expr NE expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = NE;
 						}
 		| expr AND expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = AND;
 						}
 		| expr XOR expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = XOR;
 						}
 		| expr OR expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = OR;
 						}
 		| expr LAND expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = LAND;
 						}
 		| expr LOR expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = LOR;
 						}
 		| expr ASSIGN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = ASSIGN;
 						}
 		| expr PLUSASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = PLUSASN;
 						}
 		| expr MINUSASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MINUSASN;
 						}
 		| expr MULASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MULASN;
 						}
 		| expr DIVASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = DIVASN;
 						}
 		| expr MODASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = MODASN;
 						}
 		| expr SHLASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = SHLASN;
 						}
 		| expr SHRASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = SHRASN;
 						}
 		| expr ANDASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = ANDASN;
 						}
 		| expr XORASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = XORASN;
 						}
 		| expr ORASN expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = ORASN;
 						}
 		| expr COMMA expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID);
-							$$->child[0] = $1;
-							$$->child[1] = $3;
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, $1, $3, 0, 0);
 							$$->expr = K_OPR;
 							$$->token = COMMA;
 						}
 /* TODO
 		| STRING			{
-							$$ = syntree_new_node(0, K_EXPR, T_STR);
+							$$ = syntree_new_node(0, K_EXPR, T_STR, 0, 0, 0, 0);
 							$$->expr = K_STR;
 							$$->str = strdup(yytext);
 						}
 */
 		| CHARACTER			{
-							$$ = syntree_new_node(0, K_EXPR, T_CHAR);
+							$$ = syntree_new_node(0, K_EXPR, T_CHAR, 0, 0, 0, 0);
 							$$->expr = K_CHAR;
 							$$->c = lastval;
 						}
 		| FLOATPNT			{
-							$$ = syntree_new_node(0, K_EXPR, T_DOUBLE);
+							$$ = syntree_new_node(0, K_EXPR, T_DOUBLE, 0, 0, 0, 0);
 							$$->expr = K_DOUBLE;
 							$$->dval = lastdval;
 						}
 		| INTEGER			{
-							$$ = syntree_new_node(0, K_EXPR, T_INT);
+							$$ = syntree_new_node(0, K_EXPR, T_INT, 0, 0, 0, 0);
 							$$->expr = K_INT;
 							$$->val = lastval;
 						}
 		| sym_lookup			{
 		/* TODO: add hash operation to c existence */
-							$$ = syntree_new_node(0, K_EXPR, T_VOID);
+							$$ = syntree_new_node(0, K_EXPR, T_VOID, 0, 0, 0, 0);
 							$$->expr = K_SYM;
 							$$->symbol = STACK_POP(sym_stack, sym_top);
 							$$->ntype = $$->symbol->type->kind;
 						}
 		| sym_lookup LPAREN exprz RPAREN{
 		/* call function */
-							$$ = syntree_new_node(1, K_EXPR, T_CALL);
+							$$ = syntree_new_node(1, K_EXPR, T_CALL, $3, 0, 0, 0);
 							$$->expr = K_CALL;
 							$$->symbol = STACK_POP(sym_stack, sym_top);
-							$$->child[0] = $3;
 						}
 		/* TODO: IFF */
 		;

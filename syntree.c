@@ -19,7 +19,8 @@ static void syntree_type_check(struct Syntree_node *node)
     }
 }
 
-struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enum Type_kind ntype)
+struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enum Type_kind ntype,
+        struct Syntree_node *child0, struct Syntree_node *child1, struct Syntree_node *child2, struct Syntree_node *child3)
 {
     struct Syntree_node *node = (struct Syntree_node *)malloc(sizeof(struct Syntree_node));
     node->child_count = child_count;
@@ -34,6 +35,11 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enu
     node->lineno = yyget_lineno();
     node->nkind = nkind;
     node->ntype = ntype;
+
+    if (child0) node->child[0] = child0;
+    if (child1) node->child[1] = child1;
+    if (child2) node->child[2] = child2;
+    if (child3) node->child[3] = child3;
     syntree_type_check(node);
 
     node->nodeid = nodeid_count++;
