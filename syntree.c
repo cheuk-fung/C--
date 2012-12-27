@@ -19,7 +19,7 @@ static void syntree_type_check(struct Syntree_node *node)
     }
 }
 
-struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enum Type_kind ntype,
+struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enum Type_kind ntype, void *se, void *info,
         struct Syntree_node *child0, struct Syntree_node *child1, struct Syntree_node *child2, struct Syntree_node *child3)
 {
     struct Syntree_node *node = (struct Syntree_node *)malloc(sizeof(struct Syntree_node));
@@ -35,6 +35,12 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enu
     node->lineno = yyget_lineno();
     node->nkind = nkind;
     node->ntype = ntype;
+    node->se = (union SE_kind)se;
+    if (nkind == K_DOUBLE && ntype == T_DOUBLE) {
+        node->info.dval = lastdval;
+    } else {
+        node->info = (union Information)info;
+    }
 
     if (child0) node->child[0] = child0;
     if (child1) node->child[1] = child1;
@@ -115,26 +121,26 @@ int syntree_translate(struct Syntree_node *root)
         switch (node->nkind) {
             case K_FUNC:
                 fprintf(fmsg, "Function definition:\t");
-                print_symbol(node->symbol, K_FUNC);
-                fprintf(fmsg, "\tsymbol: %s\t", node->symbol->name);
+                print_symbol(node->info.symbol, K_FUNC);
+                fprintf(fmsg, "\tsymbol: %s\t", node->info.symbol->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
                 break;
             case K_STRUCT:
                 fprintf(fmsg, "Struct definition:\t");
-                print_symbol(node->symbol, K_STRUCT);
-                fprintf(fmsg, "\tsymbol: %s\t", node->symbol->name);
+                print_symbol(node->info.symbol, K_STRUCT);
+                fprintf(fmsg, "\tsymbol: %s\t", node->info.symbol->name);
                 print_child(node);
                 syntree_translate(node->child[0]);
                 break;
             case K_DEF:
                 fprintf(fmsg, "Var definition: ");
-                print_symbol(node->symbol, K_DEF);
-                fprintf(fmsg, "\tsymbol: %s\t", node->symbol->name);
+                print_symbol(node->info.symbol, K_DEF);
+                fprintf(fmsg, "\tsymbol: %s\t", node->info.symbol->name);
                 print_child(node);
                 break;
             case K_STMT:
-                switch (node->stmt) {
+                switch (node->se.stmt) {
                     case K_IFELSE:
                         fprintf(fmsg, "IF-ELSE statement:\t");
                         print_child(node);
@@ -169,48 +175,48 @@ int syntree_translate(struct Syntree_node *root)
                         syntree_translate(node->child[3]);
                         break;
                     case K_RET:
-                        fprintf(fmsg, "Return statement of %s:\t", node->symbol->name);
+                        fprintf(fmsg, "Return statement of %s:\t", node->info.symbol->name);
                         print_child(node);
-                        syntree_translate(node->child[0]);
+                        if (node->child_count) syntree_translate(node->child[0]);
                         break;
                 }
                 break;
             case K_EXPR:
-                switch (node->expr) {
+                switch (node->se.expr) {
                     case K_CHAR:
-                        fprintf(fmsg, "CHAR constant:\t%c\t", node->c);
+                        fprintf(fmsg, "CHAR constant:\t%c\t", node->info.c);
                         print_child(node);
                         break;
                     case K_STR:
-                        fprintf(fmsg, "STRING constant:\t%s\t", node->str);
+                        fprintf(fmsg, "STRING constant:\t%s\t", node->info.str);
                         print_child(node);
                         break;
                     case K_INT:
-                        fprintf(fmsg, "Integer constant:\t%d\t", node->val);
+                        fprintf(fmsg, "Integer constant:\t%d\t", node->info.val);
                         print_child(node);
                         break;
                     case K_DOUBLE:
-                        fprintf(fmsg, "Float point constant:\t%lf\t", node->dval);
+                        fprintf(fmsg, "Float point constant:\t%lf\t", node->info.dval);
                         print_child(node);
                         break;
                     case K_SYM:
-                        fprintf(fmsg, "symbol:\t%s\t", node->symbol->name);
+                        fprintf(fmsg, "symbol:\t%s\t", node->info.symbol->name);
                         print_child(node);
                         break;
                     case K_ARY:
-                        fprintf(fmsg, "ARY symbol:\t%s\t", node->symbol->name);
+                        fprintf(fmsg, "ARY symbol:\t%s\t", node->info.symbol->name);
                         print_child(node);
                         syntree_translate(node->child[0]);
                         syntree_translate(node->child[1]);
                         break;
                     case K_CALL:
-                        fprintf(fmsg, "Function call symbol\t%s\t", node->symbol->name);
+                        fprintf(fmsg, "Function call symbol\t%s\t", node->info.symbol->name);
                         print_child(node);
                         syntree_translate(node->child[0]);
                         break;
                     case K_OPR:
                         fprintf(fmsg, "Operation expression:\t");
-                        switch (node->token) {
+                        switch (node->info.token) {
                             case INC:
                                 fprintf(fmsg, "OP:\t++(suffix)\t");
                                 print_child(node);
