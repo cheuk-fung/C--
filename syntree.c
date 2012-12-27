@@ -15,6 +15,55 @@ static void syntree_type_check(struct Syntree_node *node)
 {
     if (node->ntype != T_VOID) return ;
     if (node->nkind == K_STMT) {
+        switch (node->se.stmt) {
+            case K_IFELSE: case K_IF:
+            case K_WHILE:
+                if (node->child[0]->ntype == T_STR || node->child[0]->ntype == T_STRUCT) {
+                    fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                    exit(1);
+                } else if (node->child[0]->ntype == T_CALL && node->child[0]->info.symbol->type->kind >= T_VOID) {
+                    fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                    exit(1);
+                }
+                break;
+            case K_RET:
+                if (node->child_count == 0) {
+                    if (node->info.symbol->type->kind != T_VOID) {
+                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                        exit(1);
+                    }
+                } else if (node->info.symbol->type->kind < T_VOID) {
+                    if (
+                            (node->child[0]->ntype == T_CALL && node->child[0]->info.symbol->type->kind >= T_VOID) ||
+                            node->child[0]->ntype >= T_VOID
+                       ) {
+                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                        exit(1);
+                    }
+                    node->child[0]->ntype = node->info.symbol->type->kind;
+                } else if (node->info.symbol->type->kind == T_VOID) {
+                    if (
+                            (node->child[0]->ntype == T_CALL && node->child[0]->info.symbol->type->kind != T_VOID) ||
+                            node->child[0]->ntype != T_VOID
+                       ) {
+                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                        exit(1);
+                    }
+                } else if (node->info.symbol->type->kind == T_STRUCT) {
+                    if (
+                            (node->child[0]->ntype == T_CALL && (node->child[0]->info.symbol->type->kind != T_STRUCT || node->child[0]->info.symbol->type->struct_sym != node->info.symbol->type->struct_sym)) ||
+                            node->child[0]->ntype != T_STRUCT ||
+                            node->child[0]->info.symbol->type->struct_sym != node->info.symbol->type->struct_sym
+                       ) {
+                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                        exit(1);
+                    }
+                } else {
+                    fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                    exit(1);
+                }
+                break;
+        }
     } else if (node->nkind == K_EXPR) {
     }
 }
