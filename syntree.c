@@ -60,11 +60,36 @@ static void syntree_type_check(struct Syntree_node *node)
     } else if (node->nkind == K_EXPR) {
         switch (node->se.expr) {
             case K_OPR: {
+                            switch (node->info.token) {
+                                case INC: case DEC: case PINC: case PDEC: case NOT:
+                                    if (node->child[0]->ntype.kind > T_INT) {
+                                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                        exit(1);
+                                    }
+                                    break;
+                                case DOT:
+                                    if (node->child[0]->ntype.kind != T_STRUCT || node->child[1]->se.expr != K_SYM) {
+                                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                        exit(1);
+                                    }
+                                    break;
+                                case MEMBER:
+                                    break;
+                                case UPLUS: case UMINUS: case LNOT:
+                                    if (node->child[0]->ntype.kind > T_DOUBLE) {
+                                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                        exit(1);
+                                    }
+                                    break;
+                                case PTR: break; // check when generating codes
+                                case REFR: break; // check when generating codes
+                            }
+                            node->ntype = node->child[0]->ntype;
                             break;
                         }
-            case K_ARY: {
-                            break;
-                        }
+            case K_ARY:
+                        node->ntype = *(node->info.symbol->type);
+                        break; // check when generating codes
             case K_CALL: {
                              struct Param_entry *pe = node->info.symbol->param_list;
                              if (node->child[0] == NULL) {
@@ -77,7 +102,7 @@ static void syntree_type_check(struct Syntree_node *node)
                                  exit(1);
                              } else {
                                  struct Syntree_node *sn = node->child[0];
-                                 while (sn->nkind == K_EXPR && sn->se.expr == K_OPR && sn->info.token == COMMA && pe->next) {
+                                 while (sn->se.expr == K_OPR && sn->info.token == COMMA && pe->next) {
                                      if (sn->child[0]->ntype.kind != pe->symbol->type->kind || sn->child[0]->ntype.struct_sym != pe->symbol->type->struct_sym) {
                                          fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                                          exit(1);
@@ -88,7 +113,7 @@ static void syntree_type_check(struct Syntree_node *node)
 #ifdef NGDEBUG
                                  assert(pe);
 #endif
-                                 if ((sn->nkind == K_EXPR && sn->se.expr == K_OPR && sn->info.token == COMMA) || pe->next) {
+                                 if ((sn->se.expr == K_OPR && sn->info.token == COMMA) || pe->next) {
                                      fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                                      exit(1);
                                  }
@@ -123,7 +148,7 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enu
     node->lineno = yyget_lineno();
     node->nkind = nkind;
     node->ntype.kind = ntype;
-    if (nkind == K_STRUCT && ntype == T_STRUCT) {
+    if (ntype == T_STRUCT) {
         node->ntype.struct_sym = ((struct Stab *)info)->type->struct_sym;
     }
     node->se = (union SE_kind)se;

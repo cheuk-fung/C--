@@ -234,7 +234,7 @@ func_def	: type id_noary env_enter LPAREN param_list RPAREN block env_leave	{
 							struct Stab *symbol = STACK_POP(sym_stack, sym_top);
 							symbol->isfunc = TRUE;
 							symbol->type = STACK_POP(type_stack, type_top);
-							$$ = syntree_new_node(1, K_FUNC, T_FUNC, NULL, (void *)symbol, $7, 0, 0, 0);
+							$$ = syntree_new_node(1, K_FUNC, T_VOID, NULL, (void *)symbol, $7, 0, 0, 0);
 						}
 		;
 
@@ -331,11 +331,17 @@ expr		: expr INC			{
 		| expr LSBRAC expr RSBRAC	{
 							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_ARY, (void *)($1->info.symbol), $1, $3, 0, 0);
 						}
-		| expr DOT expr			{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_OPR, (void *)DOT, $1, $2, 0, 0);
+		| expr DOT SYM			{
+							if ($1->ntype.kind != T_STRUCT) {
+								fprintf(stderr, "Not a struct on line %d.\n", $1->lineno);
+								exit(1);
+							}
+							struct Stab *symbol = env_lookup($1->ntype.struct_sym->member_env, lastsym);
+							struct Syntree_node *node = syntree_new_node(0, K_EXPR, symbol->type->kind, (void *)K_SYM, (void *)symbol, 0, 0, 0, 0);
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_OPR, (void *)DOT, $1, node, 0, 0);
 						}
-		| expr MEMBER expr		{
-							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_OPR, (void *)MEMBER, $1, $2, 0, 0);
+		| expr MEMBER SYM		{
+		/* TODO */
 						}
 		| INC expr %prec PINC		{
 							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_OPR, (void *)PINC, $2, 0, 0, 0);

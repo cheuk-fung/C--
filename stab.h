@@ -6,7 +6,7 @@
 #include "global.h"
 #include "env.h"
 
-enum Type_kind { T_CHAR, T_INT, T_FLOAT, T_DOUBLE, T_VOID, T_STR, T_STRUCT, T_FUNC };
+enum Type_kind { T_CHAR, T_INT, T_FLOAT, T_DOUBLE, T_VOID, T_STR, T_STRUCT };
 
 struct Stab;
 
