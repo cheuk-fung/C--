@@ -9,6 +9,8 @@
 #include "syntree.h"
 #include "stab.h"
 
+#define MAX(x, y) (x) > (y) ? (x) : (y)
+
 FILE *fmsg;
 static int nodeid_count = 0;
 
@@ -60,6 +62,7 @@ static void syntree_type_check(struct Syntree_node *node)
     } else if (node->nkind == K_EXPR) {
         switch (node->se.expr) {
             case K_OPR: {
+                            node->ntype.kind = -1;
                             switch (node->info.token) {
                                 case INC: case DEC: case PINC: case PDEC: case NOT:
                                     if (node->child[0]->ntype.kind > T_INT) {
@@ -72,19 +75,63 @@ static void syntree_type_check(struct Syntree_node *node)
                                         fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                                         exit(1);
                                     }
+                                    node->ntype = node->child[1]->ntype;
                                     break;
                                 case MEMBER:
+                                    /* TODO */
                                     break;
-                                case UPLUS: case UMINUS: case LNOT:
+                                case LNOT:
+                                    node->ntype.kind = T_INT;
+                                case UPLUS: case UMINUS:
                                     if (node->child[0]->ntype.kind > T_DOUBLE) {
                                         fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                                         exit(1);
                                     }
                                     break;
-                                case PTR: break; // check when generating codes
-                                case REFR: break; // check when generating codes
+                                case PTR:
+                                    break; // check when generating codes
+                                case REFR:
+                                    break; // check when generating codes
+                                case LT: case LE: case GT: case GE: case EQ: case NE: case LAND: case LOR:
+                                    node->ntype.kind = T_INT;
+                                case MULTIPLY: case DIVIDE: case PLUS: case MINUS:
+                                    if (node->child[0]->ntype.kind > T_DOUBLE || node->child[1]->ntype.kind > T_DOUBLE) {
+                                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                        exit(1);
+                                    }
+                                    node->child[0]->ntype.kind = node->child[1]->ntype.kind = MAX(node->child[0]->ntype.kind, node->child[1]->ntype.kind);
+                                    break;
+                                case MOD: case SHL: case SHR: case AND: case XOR: case OR:
+                                    if (node->child[0]->ntype.kind > T_INT || node->child[1]->ntype.kind > T_INT) {
+                                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                        exit(1);
+                                    }
+                                    node->child[0]->ntype.kind = node->child[1]->ntype.kind = MAX(node->child[0]->ntype.kind, node->child[1]->ntype.kind);
+                                    break;
+                                case ASSIGN:
+                                    if (node->child[0]->ntype.kind == T_STRUCT && node->child[1]->ntype.kind == T_STRUCT) {
+                                        if (node->child[0]->ntype.struct_sym != node->child[1]->ntype.struct_sym) {
+                                            fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                            exit(1);
+                                        }
+                                    } else if (node->child[0]->ntype.kind > T_DOUBLE || node->child[1]->ntype.kind > T_DOUBLE) {
+                                        fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                                        exit(1);
+                                    }
+                                    node->ntype = node->child[1]->ntype = node->child[0]->ntype;
+                                    break;
+                                case PLUSASN: case MINUSASN: case MULASN: case DIVASN:
+                                    /* TODO */
+                                    break;
+                                case MODASN: case SHLASN: case SHRASN: case ANDASN: case XORASN: case ORASN:
+                                    /* TODO */
+                                    break;
+                                case COMMA:
+                                    node->ntype = node->child[1]->ntype;
                             }
-                            node->ntype = node->child[0]->ntype;
+                            if (node->ntype.kind == -1) {
+                                node->ntype = node->child[0]->ntype;
+                            }
                             break;
                         }
             case K_ARY:
