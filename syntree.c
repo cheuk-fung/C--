@@ -9,8 +9,6 @@
 #include "syntree.h"
 #include "stab.h"
 
-#define MAX(x, y) (x) > (y) ? (x) : (y)
-
 FILE *fmsg;
 static int nodeid_count = 0;
 
@@ -214,6 +212,9 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enu
     if (child2) node->child[2] = child2;
     if (child3) node->child[3] = child3;
     syntree_type_check(node);
+
+    node->tmppos = curr_env->tmp_size;
+    curr_env->tmp_size += type_size(&node->ntype);
 
     node->nodeid = nodeid_count++;
 
