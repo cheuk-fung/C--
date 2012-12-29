@@ -1,5 +1,5 @@
-#ifndef PARSER_SYNTREE_H
-#define PARSER_SYNTREE_H
+#ifndef CMM_SYNTREE_H
+#define CMM_SYNTREE_H
 
 #include <stdio.h>
 #include "parser.h"
@@ -49,6 +49,6 @@ struct Syntree_node *syntree_new_node(int, enum Node_kind, enum Type_kind, void 
 struct Syntree_node *syntree_insert_last(struct Syntree_node *, struct Syntree_node *);
 int syntree_translate(struct Syntree_node *);
 
-#endif /* !PARSER_SYNTREE_H */
+#endif /* !CMM_SYNTREE_H */
 
 

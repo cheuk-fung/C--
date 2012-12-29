@@ -1,5 +1,5 @@
-#ifndef PARSER_STAB_H
-#define PARSER_STAB_H
+#ifndef CMM_STAB_H
+#define CMM_STAB_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -58,5 +58,5 @@ struct Arysize_entry *arysize_new(size_t);
 struct Param_entry *param_new(struct Stab *);
 struct Type_info *type_new(enum Type_kind, struct Stab *);
 
-#endif /* !PARSER_STAB_H */
+#endif /* !CMM_STAB_H */
 

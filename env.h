@@ -1,5 +1,5 @@
-#ifndef PARSER_ENV_H
-#define PARSER_ENV_H
+#ifndef CMM_ENV_H
+#define CMM_ENV_H
 
 #include "trie.h"
 
@@ -17,5 +17,5 @@ struct Env *env_new(struct Env *);
 struct Stab *env_insert(struct Env *, const char *, int);
 struct Stab *env_lookup(struct Env *, const char *);
 
-#endif /* !PARSER_ENV_H */
+#endif /* !CMM_ENV_H */
 

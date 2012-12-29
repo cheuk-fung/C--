@@ -1,5 +1,5 @@
-#ifndef PARSER_GLOBAL_H
-#define PARSER_GLOBAL_H
+#ifndef CMM_GLOBAL_H
+#define CMM_GLOBAL_H
 
 #ifndef YYSTYPE
 #define YYSTYPE struct Syntree_node *
@@ -31,5 +31,5 @@ double lastdval;
 char *prevsym;
 char *lastsym;
 
-#endif /* !PARSER_GLOBAL_H */
+#endif /* !CMM_GLOBAL_H */
 

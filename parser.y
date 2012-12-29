@@ -10,6 +10,7 @@
 #include "env.h"
 #include "syntree.h"
 #include "stab.h"
+#include "asm.h"
 
 %}
 
@@ -127,6 +128,10 @@ program		: code				{
 							syntree_translate($1);
 							fclose(fmsg);
 
+							fasm = fopen(stdout, "w");
+							asm_head();
+							asm_translate($1);
+							fclose(fasm);
 						}
 		/* TODO: error handling */
 		/* TODO: memory free */

@@ -1,5 +1,5 @@
-#ifndef PARSER_TRIE_H
-#define PARSER_TRIE_H
+#ifndef CMM_TRIE_H
+#define CMM_TRIE_H
 
 #include "stab.h"
 
@@ -12,5 +12,5 @@ struct Trie_node *trie_new_node();
 struct Stab *trie_insert(struct Trie_node *, const char *, int);
 struct Stab *trie_lookup(struct Trie_node *, const char *);
 
-#endif /* !PARSER_TRIE_H */
+#endif /* !CMM_TRIE_H */
 
