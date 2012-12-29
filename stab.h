@@ -27,7 +27,7 @@ struct Type_info {
 
 struct Stab {
     char *name;
-    int offset;			// given during translation
+    size_t offset;			// given during translation
     size_t size;
     int lineno; 		// declaration line
     struct Type_info *type;

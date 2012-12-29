@@ -21,6 +21,7 @@
 	global_env = curr_env = env_new(NULL);
 	load_std_func("scanf", T_INT);
 	load_std_func("printf", T_INT);
+	load_std_func("putchar", T_INT);
 }
 
 %token COMMENT
@@ -154,6 +155,7 @@ env_enter	:				{ curr_env = env_new(curr_env); }
 		;
 
 env_leave	:				{
+							curr_env->call_size += 16;
 							if (curr_env->prev != global_env) {
 								curr_env->prev->var_size = curr_env->var_size;
 								curr_env->prev->tmp_size = curr_env->tmp_size;
