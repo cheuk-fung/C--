@@ -20,7 +20,7 @@ union Information {
     void *nothing;
     enum yytokentype token;
     char c;
-    char *str;
+    int strno;
     int val;
     double dval;
     struct Stab *symbol;
@@ -42,6 +42,7 @@ struct Syntree_node {
 };
 
 extern FILE *fmsg;
+extern FILE *fasm;
 
 struct Syntree_node *syntree_new_node(int, enum Node_kind, enum Type_kind, void *, void *,
         struct Syntree_node *, struct Syntree_node *, struct Syntree_node *, struct Syntree_node *);

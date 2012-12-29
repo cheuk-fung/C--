@@ -31,7 +31,7 @@ struct Stab {
     int lineno; 		// declaration line
     struct Type_info *type;
     BOOL isfunc;
-    int ptrcount;
+    int ptr_cnt;
     union {
         int arysize_cnt;
         int param_cnt;
@@ -49,6 +49,9 @@ struct Type_info *type_stack[MAX_STACK_SIZE];
 
 extern int sym_top;
 struct Stab *sym_stack[MAX_STACK_SIZE];
+
+extern int str_cnt;
+char *strings[MAX_STACK_SIZE];
 
 struct Stab *stab_new(const char *, int);
 struct Arysize_entry *arysize_new(size_t);

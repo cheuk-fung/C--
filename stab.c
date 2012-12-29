@@ -4,6 +4,7 @@
 
 int type_top = 0;
 int sym_top = 0;
+int str_cnt = 0;
 
 struct Stab *stab_new(const char *name, int lineno)
 {

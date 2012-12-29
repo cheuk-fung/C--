@@ -118,14 +118,15 @@
 %%
 
 program		: code				{
-							fmsg = fopen("msg.out", "w");
-							fprintf(fmsg, "node id(env id):\tDescription\tChildren\n");
-							syntree_translate($1);
-							fclose(fmsg);
 #ifdef NGDEBUG
 							assert(sym_top == 0);
 							assert(type_top == 0);
 #endif
+							fmsg = fopen("msg.out", "w");
+							fprintf(fmsg, "node id(env id):\tDescription\tChildren\n");
+							syntree_translate($1);
+							fclose(fmsg);
+
 						}
 		/* TODO: error handling */
 		/* TODO: memory free */
@@ -171,11 +172,11 @@ type		: TYPE
 pointer		: MULTIPLY sym_insert		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
-							symbol->ptrcount = 1;
+							symbol->ptr_cnt = 1;
 						}
 		| MULTIPLY pointer		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
-							symbol->ptrcount++;
+							symbol->ptr_cnt++;
 						}
 		;
 
@@ -457,11 +458,10 @@ expr		: expr INC			{
 		| expr COMMA expr		{
 							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_OPR, (void *)COMMA, $1, $3, 0, 0);
 						}
-/* TODO
 		| STRING			{
-							$$ = syntree_new_node(0, K_EXPR, T_STR, (void *)K_STR, (void *)strdup(yytext), 0, 0, 0, 0);
+							strings[str_cnt] = strdup(yytext);
+							$$ = syntree_new_node(0, K_EXPR, T_STR, (void *)K_STR, (void *)str_cnt++, 0, 0, 0, 0);
 						}
-*/
 		| CHARACTER			{
 							$$ = syntree_new_node(0, K_EXPR, T_CHAR, (void *)K_CHAR, (void *)lastval, 0, 0, 0, 0);
 						}
