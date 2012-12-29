@@ -37,6 +37,7 @@ struct Syntree_node {
     struct Type_info ntype;
     union SE_kind se;
     union Information info;
+    int tmppos;
 
     int nodeid;
 };

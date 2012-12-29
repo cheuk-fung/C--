@@ -126,8 +126,6 @@ program		: code				{
 							assert(type_top == 0);
 #endif
 
-							env_size(global_env);
-
 							fmsg = fopen("msg.out", "w");
 							fprintf(fmsg, "node id(env id):\tDescription\tChildren\n");
 							syntree_translate($1);
@@ -156,7 +154,11 @@ env_enter	:				{ curr_env = env_new(curr_env); }
 		;
 
 env_leave	:				{
-							env_size(curr_env);
+							if (curr_env->prev != global_env) {
+								curr_env->prev->var_size = curr_env->var_size;
+								curr_env->prev->tmp_size = curr_env->tmp_size;
+								curr_env->prev->call_size = curr_env->call_size;
+							}
 	  						curr_env = curr_env->prev;
 						}
 		;
@@ -188,6 +190,12 @@ pointer		: MULTIPLY sym_insert		{
 							symbol->type = STACK_TOP(type_stack, type_top);
 							symbol->ptr_cnt = 1;
 							symbol->size = PTR_SIZE;
+							if (curr_env != global_env) {
+								symbol->offset = curr_env->var_size;
+								curr_env->var_size += symbol->size;
+							} else {
+								symbol->offset = -1;
+							}
 						}
 		| MULTIPLY pointer		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
@@ -199,6 +207,12 @@ id_noary	: sym_insert			{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
 							symbol->size = type_size(symbol->type);
+							if (curr_env != global_env) {
+								symbol->offset = curr_env->var_size;
+								curr_env->var_size += symbol->size;
+							} else {
+								symbol->offset = -1;
+							}
 						}
 		| pointer
 		;
@@ -220,7 +234,15 @@ array		: array LSBRAC INTEGER RSBRAC	{
 						}
 
 identifier	: id_noary
-		| array
+		| array				{
+							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
+							if (curr_env != global_env) {
+								symbol->offset = curr_env->var_size;
+								curr_env->var_size += symbol->size * symbol->arysize_list->size;
+							} else {
+								symbol->offset = -1;
+							}
+						}
 		;
 
 idlist		: idlist COMMA identifier	{
@@ -269,7 +291,7 @@ struct_def	: STRUCT sym_insert env_enter LBRACE var_def_list RBRACE env_leave SE
 							if ($5) {
 								symbol->member_cnt = $5->env->symbol_cnt;
 								symbol->member_env = $5->env;
-								get_struct_size(symbol);
+								symbol->size = symbol->member_env->var_size;
 							}
 							$$ = syntree_new_node(1, K_STRUCT, T_STRUCT, NULL, (void *)symbol, $5, 0, 0, 0);
 						}
@@ -284,12 +306,14 @@ params		: params COMMA param		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->param_cnt++;
 							LIST_INSERT(symbol->param_list, pe);
+							symbol->param_size += pe->symbol->size;
 						}
 		| param				{
 							struct Param_entry *pe = param_new(STACK_POP(sym_stack, sym_top));
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->param_cnt = 1;
 							symbol->param_list = pe;
+							symbol->param_size = pe->symbol->size;
 						}
 		;
 
@@ -504,6 +528,7 @@ expr		: expr INC			{
 		/* call function */
 							struct Stab *symbol = STACK_POP(sym_stack, sym_top);
 							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_CALL, (void *)symbol, $3, 0, 0, 0);
+							curr_env->call_size = MAX(curr_env->call_size, symbol->param_size);
 						}
 		/* TODO: IFF */
 		;

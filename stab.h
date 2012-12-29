@@ -32,6 +32,7 @@ struct Stab {
     int lineno; 		// declaration line
     struct Type_info *type;
     BOOL isfunc;
+    size_t param_size;
     int ptr_cnt;
     union {
         int arysize_cnt;
@@ -59,7 +60,6 @@ struct Arysize_entry *arysize_new(size_t);
 struct Param_entry *param_new(struct Stab *);
 struct Type_info *type_new(enum Type_kind, struct Stab *);
 size_t type_size(struct Type_info *);
-size_t struct_size(struct Stab *);
 
 #endif /* !CMM_STAB_H */
 

@@ -15,7 +15,6 @@
 #define DOUBLE_SIZE 8
 #define PTR_SIZE 4
 
-#define MAX_PARAM_SIZE 20 /* FIXME */
 #define MAX_STACK_SIZE 1024
 
 #define STACK_PUSH(stack, top, entry) \
@@ -32,6 +31,8 @@
         while (ptr->next) ptr = ptr->next; \
         ptr->next = entry; \
     } while (0)
+
+#define MAX(x, y) (x) > (y) ? (x) : (y)
 
 int lastval;
 double lastdval;

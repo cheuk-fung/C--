@@ -57,10 +57,3 @@ size_t type_size(struct Type_info *ti)
     return 0;
 }
 
-size_t get_struct_size(struct Stab *symbol)
-{
-#ifdef NGDEBUG
-    assert(symbol->size == 0);
-#endif
-    return symbol->size = symbol->member_env->size;
-}

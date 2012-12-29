@@ -17,6 +17,16 @@ struct Env *env_new(struct Env *prev)
     e->symbol_cnt = 0;
     e->envid = envid_count++;
 
+    if (prev == global_env) {
+        e->var_size = 0;
+        e->tmp_size = 0;
+        e->call_size = 0;
+    } else {
+        e->var_size = prev->var_size;
+        e->tmp_size = prev->tmp_size;
+        e->call_size = prev->call_size;
+    }
+
     return e;
 }
 
@@ -39,14 +49,6 @@ struct Stab *env_lookup(struct Env *e, const char *name)
     return NULL;
 }
 
-size_t env_size(struct Env *e)
-{
-    if (e->trie_root) {
-        return e->size = trie_size(e->trie_root);
-    }
-    return e->size = 0;
-}
-
 void load_std_func(char *func, enum Type_kind type)
 {
     struct Stab *symbol = env_insert(global_env, func, -1);
@@ -54,3 +56,7 @@ void load_std_func(char *func, enum Type_kind type)
     symbol->type = type_new(type, NULL);
 }
 
+size_t env_size(struct Env *e)
+{
+    return e->var_size + e->tmp_size + e->call_size;
+}

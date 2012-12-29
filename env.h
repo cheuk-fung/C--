@@ -9,7 +9,9 @@ struct Env {
     struct Trie_node *trie_root;
     int symbol_cnt;
     int envid;
-    size_t size;
+    size_t var_size;
+    size_t tmp_size;
+    size_t call_size;
 };
 
 struct Env *global_env;
