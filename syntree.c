@@ -12,7 +12,6 @@
 #define MAX(x, y) (x) > (y) ? (x) : (y)
 
 FILE *fmsg;
-FILE *fasm;
 static int nodeid_count = 0;
 
 static void syntree_type_check(struct Syntree_node *node)
@@ -139,6 +138,10 @@ static void syntree_type_check(struct Syntree_node *node)
                         node->ntype = *(node->info.symbol->type);
                         break; // check when generating codes
             case K_CALL: {
+                             if (node->info.symbol->lineno < 0) {
+                                 node->ntype = *(node->info.symbol->type);
+                                 break;
+                             }
                              struct Param_entry *pe = node->info.symbol->param_list;
                              if (node->child[0] == NULL) {
                                  if (pe != NULL) {
@@ -251,6 +254,7 @@ static void print_symbol(struct Stab *symbol, enum Node_kind nkind)
         case T_DOUBLE: fprintf(fmsg, "double"); break;
         case T_STRUCT: fprintf(fmsg, "struct %s", symbol->type->struct_sym->name);
     }
+    fprintf(fmsg, "(size %zd)", symbol->size);
     if (symbol->ptr_cnt) {
         fprintf(fmsg, " (%d)", symbol->ptr_cnt);
         int t;

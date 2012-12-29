@@ -19,6 +19,8 @@
 
 %initial-action {
 	global_env = curr_env = env_new(NULL);
+	load_std_func("scanf", T_INT);
+	load_std_func("printf", T_INT);
 }
 
 %token COMMENT
@@ -123,12 +125,16 @@ program		: code				{
 							assert(sym_top == 0);
 							assert(type_top == 0);
 #endif
+
+							env_size(global_env);
+
 							fmsg = fopen("msg.out", "w");
 							fprintf(fmsg, "node id(env id):\tDescription\tChildren\n");
 							syntree_translate($1);
 							fclose(fmsg);
 
-							fasm = fopen(stdout, "w");
+							//fasm = fopen("a.asm", "w");
+							fasm = stdout;
 							asm_head();
 							asm_translate($1);
 							fclose(fasm);
@@ -149,7 +155,10 @@ global		: var_def			{ $$ = $1; }
 env_enter	:				{ curr_env = env_new(curr_env); }
 		;
 
-env_leave	:				{ curr_env = curr_env->prev; }
+env_leave	:				{
+							env_size(curr_env);
+	  						curr_env = curr_env->prev;
+						}
 		;
 
 sym_insert	: SYM				{
@@ -178,6 +187,7 @@ pointer		: MULTIPLY sym_insert		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
 							symbol->ptr_cnt = 1;
+							symbol->size = PTR_SIZE;
 						}
 		| MULTIPLY pointer		{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
@@ -188,6 +198,7 @@ pointer		: MULTIPLY sym_insert		{
 id_noary	: sym_insert			{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							symbol->type = STACK_TOP(type_stack, type_top);
+							symbol->size = type_size(symbol->type);
 						}
 		| pointer
 		;
@@ -196,6 +207,10 @@ array		: array LSBRAC INTEGER RSBRAC	{
 							struct Stab *symbol = STACK_TOP(sym_stack, sym_top);
 							struct Arysize_entry *ae = arysize_new(lastval);
 							symbol->arysize_cnt++;
+							struct Arysize_entry *al;
+							for (al = symbol->arysize_list; al; al = al->next) {
+								al->size *= lastval;
+							}
 							LIST_INSERT(symbol->arysize_list, ae);
 						}
 		| id_noary LSBRAC INTEGER RSBRAC{
@@ -240,6 +255,9 @@ func_def	: type id_noary env_enter LPAREN param_list RPAREN block env_leave	{
 							struct Stab *symbol = STACK_POP(sym_stack, sym_top);
 							symbol->isfunc = TRUE;
 							symbol->type = STACK_POP(type_stack, type_top);
+							if (symbol->size == 0) {
+								symbol->size = type_size(symbol->type);
+							}
 							$$ = syntree_new_node(1, K_FUNC, T_VOID, NULL, (void *)symbol, $7, 0, 0, 0);
 						}
 		;
@@ -251,6 +269,7 @@ struct_def	: STRUCT sym_insert env_enter LBRACE var_def_list RBRACE env_leave SE
 							if ($5) {
 								symbol->member_cnt = $5->env->symbol_cnt;
 								symbol->member_env = $5->env;
+								get_struct_size(symbol);
 							}
 							$$ = syntree_new_node(1, K_STRUCT, T_STRUCT, NULL, (void *)symbol, $5, 0, 0, 0);
 						}

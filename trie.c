@@ -43,3 +43,25 @@ struct Stab *trie_lookup(struct Trie_node *root, const char *name)
     }
     return p->symbol;
 }
+
+size_t trie_size(struct Trie_node *root)
+{
+    size_t size = 0;
+    if (root->symbol) {
+        struct Stab *symbol = root->symbol;
+        if (!symbol->isfunc && symbol->type->kind != T_STRUCT && symbol->arysize_cnt) {
+            size += symbol->size * symbol->arysize_list->size;
+        } else {
+            size += symbol->size;
+        }
+    }
+
+    int i;
+    for (i = 0; i < 53; i++) {
+        if (root->next[i]) {
+            size += trie_size(root->next[i]);
+        }
+    }
+
+    return size;
+}

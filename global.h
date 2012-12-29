@@ -9,6 +9,13 @@
 #define TRUE 1
 #define FALSE 0
 
+#define CHAR_SIZE 1
+#define INT_SIZE 4
+#define FLOAT_SIZE 4
+#define DOUBLE_SIZE 8
+#define PTR_SIZE 4
+
+#define MAX_PARAM_SIZE 20 /* FIXME */
 #define MAX_STACK_SIZE 1024
 
 #define STACK_PUSH(stack, top, entry) \

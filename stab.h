@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "global.h"
-#include "env.h"
 
 enum Type_kind { T_CHAR, T_INT, T_FLOAT, T_DOUBLE, T_VOID, T_STR, T_STRUCT };
 
 struct Stab;
+struct Env;
 
 struct Arysize_entry {
     size_t size;
@@ -27,7 +27,8 @@ struct Type_info {
 
 struct Stab {
     char *name;
-    int addr;			// given during translation
+    int offset;			// given during translation
+    size_t size;
     int lineno; 		// declaration line
     struct Type_info *type;
     BOOL isfunc;
@@ -57,6 +58,8 @@ struct Stab *stab_new(const char *, int);
 struct Arysize_entry *arysize_new(size_t);
 struct Param_entry *param_new(struct Stab *);
 struct Type_info *type_new(enum Type_kind, struct Stab *);
+size_t type_size(struct Type_info *);
+size_t struct_size(struct Stab *);
 
 #endif /* !CMM_STAB_H */
 

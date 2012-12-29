@@ -1,3 +1,7 @@
+#ifdef NGDEBUG
+#include <assert.h>
+#endif
+
 #include <stdlib.h>
 #include "env.h"
 #include "trie.h"
@@ -33,5 +37,20 @@ struct Stab *env_lookup(struct Env *e, const char *name)
         }
     }
     return NULL;
+}
+
+size_t env_size(struct Env *e)
+{
+    if (e->trie_root) {
+        return e->size = trie_size(e->trie_root);
+    }
+    return e->size = 0;
+}
+
+void load_std_func(char *func, enum Type_kind type)
+{
+    struct Stab *symbol = env_insert(global_env, func, -1);
+    symbol->isfunc = TRUE;
+    symbol->type = type_new(type, NULL);
 }
 

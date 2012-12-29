@@ -1,6 +1,11 @@
+#ifdef NGDEBUG
+#include <assert.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include "stab.h"
+#include "env.h"
 
 int type_top = 0;
 int sym_top = 0;
@@ -39,3 +44,23 @@ struct Type_info *type_new(enum Type_kind kind, struct Stab *struct_sym)
     return ti;
 }
 
+size_t type_size(struct Type_info *ti)
+{
+    switch (ti->kind) {
+        case T_CHAR: return CHAR_SIZE;
+        case T_INT: return INT_SIZE;
+        case T_FLOAT: return FLOAT_SIZE;
+        case T_DOUBLE: return DOUBLE_SIZE;
+        case T_STRUCT: return ti->struct_sym->size;
+        default: return 0;
+    }
+    return 0;
+}
+
+size_t get_struct_size(struct Stab *symbol)
+{
+#ifdef NGDEBUG
+    assert(symbol->size == 0);
+#endif
+    return symbol->size = symbol->member_env->size;
+}
