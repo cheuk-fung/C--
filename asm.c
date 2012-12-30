@@ -504,6 +504,52 @@ void translate_expression(struct Syntree_node *node)
                             fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
                         }
                         break;
+                    case SHL:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%ecx\n", postmp);
+                            fprintf(fasm, "\tsall\t%%cl, %%eax\n");
+                            fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%ecx\n", postmp);
+                            fprintf(fasm, "\tsall\t%%cl, %%eax\n");
+                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        }
+                        break;
+                    case SHR:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%ecx\n", postmp);
+                            fprintf(fasm, "\tsarl\t%%cl, %%eax\n");
+                            fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%ecx\n", postmp);
+                            fprintf(fasm, "\tsarl\t%%cl, %%eax\n");
+                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        }
+                        break;
+                    case LT:
+                        /* TODO */
+                    case LE:
+                    case GT:
+                    case GE:
+                    case EQ:
+                    case NE:
+                    case AND:
+                    case XOR:
+                    case OR:
+                    case LAND:
+                    case LOR:
                     case ASSIGN:
                         if (node->ntype.kind != T_DOUBLE) {
                             get_pos(node->child[1], FROM);
