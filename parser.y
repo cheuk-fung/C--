@@ -390,7 +390,7 @@ expr		: expr INC			{
 							}
 							struct Stab *symbol = env_lookup($1->ntype.struct_sym->member_env, lastsym);
 							struct Syntree_node *node = syntree_new_node(0, K_EXPR, symbol->type->kind, (void *)K_SYM, (void *)symbol, 0, 0, 0, 0);
-							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_OPR, (void *)DOT, $1, node, 0, 0);
+							$$ = syntree_new_node(2, K_EXPR, T_VOID, (void *)K_DOT, (void *)DOT, $1, node, 0, 0);
 						}
 		| expr MEMBER SYM		{
 		/* TODO */

@@ -72,13 +72,6 @@ static void syntree_type_check(struct Syntree_node *node)
                             }
                             node->ntype = node->child[0]->ntype;
                             break;
-                        case DOT:
-                            if (node->child[0]->ntype.kind != T_STRUCT || node->child[1]->se.expr != K_SYM) {
-                                fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
-                                exit(1);
-                            }
-                            node->ntype = node->child[1]->ntype;
-                            break;
                         case MEMBER:
                             /* TODO */
                             break;
@@ -136,6 +129,13 @@ static void syntree_type_check(struct Syntree_node *node)
                     }
                     break;
                 }
+            case K_DOT:
+                if (node->child[0]->ntype.kind != T_STRUCT || node->child[1]->se.expr != K_SYM) {
+                    fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
+                    exit(1);
+                }
+                node->ntype = node->child[1]->ntype;
+                break;
             case K_ARY:
                 node->ntype = *(node->info.symbol->type);
                 break; // check when generating codes

@@ -26,7 +26,9 @@ static void asm_global_var(struct Trie_node *node)
         struct Stab *symbol = node->symbol;
         if (symbol->funcno < 0) {
             if (symbol->type->kind == T_STRUCT) {
-                /* TODO */
+                if (symbol != symbol->type->struct_sym) {
+                    fprintf(fasm, "\t.comm\t%s,%zd,%zd\n", symbol->name, symbol->size, 4);
+                }
             } else if (symbol->arysize_cnt) {
                 /* TODO */
             } else {
@@ -141,6 +143,24 @@ static void get_pos(struct Syntree_node *sn, int dir)
             }
         case K_ARY:
             /* TODO */
+        case K_DOT:
+            {
+                int offset = sn->child[0]->info.symbol->offset;
+                if (offset == -1) {
+                    sprintf(eptmp, "%s+%zd", sn->child[0]->info.symbol->name, sn->child[1]->info.symbol->offset);
+                } else if (offset < curr_func_env->param_size) {
+                    get_ebp(offset + sn->child[1]->info.symbol->offset);
+                } else {
+                    get_esp(offset + curr_func_env->tmp_size + curr_func_env->call_size - curr_func_env->param_size + sn->child[1]->info.symbol->offset);
+                }
+                if (dir == TO || sn->ntype.kind == T_DOUBLE) {
+                    sprintf(postmp, "%s", eptmp);
+                } else {
+                    fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), eptmp, type_register(sn->ntype.kind));
+                    sprintf(postmp, "%s", type_register(sn->ntype.kind));
+                }
+                break;
+            }
         case K_CALL:
         case K_OPR:
             {
@@ -379,9 +399,6 @@ void translate_expression(struct Syntree_node *node)
                             get_pos(node->child[0], TO);
                             fprintf(fasm, "\tmovl\t%s, %s\n", strtmp, postmp);
                         }
-                        break;
-                    case DOT:
-                        /* TODO */
                         break;
                     case MEMBER:
                         /* TODO */
