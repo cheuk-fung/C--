@@ -45,6 +45,9 @@ void asm_head()
     for (i = 0; i < str_cnt; i++) {
         fprintf(fasm, ".str%d:\t.string\t%s\n", i, strings[i]);
     }
+    for (i = 0; i < dbl_cnt; i++) {
+        fprintf(fasm, ".dbl%d:\t.long\t%d\n\t.long\t%d\n", i, *(int *)(dbl + i), *((int *)(dbl + i) + 1));
+    }
     asm_global_var(global_env->trie_root);
 
     fprintf(fasm, "\n");
@@ -61,6 +64,7 @@ static char *mov_action(enum Type_kind kind)
         case T_CHAR: return "movb";
         case T_STR: return "movl";
         case T_INT: return "movl";
+        case T_FLOAT: return "movl";
         default: return "kidding";
     }
     return 0;
@@ -72,6 +76,7 @@ static char *type_register(enum Type_kind kind)
         case T_CHAR: return "%cl";
         case T_INT: return "%ecx";
         case T_STR: return "%ecx";
+        case T_FLOAT: return "%ecx";
         default: return "kidding";
     }
     return 0;
@@ -109,6 +114,8 @@ static void get_pos(struct Syntree_node *sn, int dir)
             sprintf(postmp, "$%d", sn->info.val);
             break;
         case K_DOUBLE:
+            sprintf(postmp, ".dbl%d", sn->info.dblno);
+            break;
             /* TODO */
         case K_SYM:
             {
@@ -120,7 +127,7 @@ static void get_pos(struct Syntree_node *sn, int dir)
                 } else {
                     get_esp(offset + sn->env->tmp_size + sn->env->call_size - sn->env->param_size);
                 }
-                if (dir == TO) {
+                if (dir == TO || sn->ntype.kind == T_DOUBLE) {
                     sprintf(postmp, "%s", eptmp);
                 } else {
                     fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), eptmp, type_register(sn->ntype.kind));
@@ -132,8 +139,15 @@ static void get_pos(struct Syntree_node *sn, int dir)
             /* TODO */
         case K_CALL:
         case K_OPR:
-            fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), get_esp(sn->tmppos), type_register(sn->ntype.kind));
-            sprintf(postmp, "%s", type_register(sn->ntype.kind));
+            {
+                get_esp(sn->tmppos);
+                if (sn->ntype.kind != T_DOUBLE) {
+                    fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), eptmp, type_register(sn->ntype.kind));
+                    sprintf(postmp, "%s", type_register(sn->ntype.kind));
+                } else {
+                    sprintf(postmp, "%s", eptmp);
+                }
+            }
             break;
     }
 }
@@ -198,19 +212,33 @@ void translate_expression(struct Syntree_node *node)
                     while (sn->se.expr == K_OPR && sn->info.token == COMMA) {
                         get_pos(sn->child[0], FROM);
                         get_esp(offset);
-                        fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->child[0]->ntype.kind), postmp, eptmp);
+                        if (sn->child[0]->ntype.kind != T_DOUBLE) {
+                            fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->child[0]->ntype.kind), postmp, eptmp);
+                        } else {
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            fprintf(fasm, "\tfstpl\t%s\n", eptmp);
+                        }
                         offset += type_size(&sn->child[0]->ntype);
                         sn = sn->child[1];
                     }
                     get_pos(sn, FROM);
                     get_esp(offset);
-                    fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), postmp, eptmp);
+                    if (sn->ntype.kind != T_DOUBLE) {
+                        fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), postmp, eptmp);
+                    } else {
+                        fprintf(fasm, "\tfldl\t%s\n", postmp);
+                        fprintf(fasm, "\tfstpl\t%s\n", eptmp);
+                    }
                     offset += type_size(&sn->ntype);
                 }
                 fprintf(fasm, "\tcalll\t%s\n", node->info.symbol->name);
                 if (node->ntype.kind <= T_DOUBLE) {
                     get_esp(node->tmppos);
-                    fprintf(fasm, "\tmovl\t%%eax, %s\n", eptmp);
+                    if (node->ntype.kind != T_DOUBLE) {
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", eptmp);
+                    } else {
+                        /* TODO */
+                    }
                 }
                 break;
             }
@@ -220,10 +248,17 @@ void translate_expression(struct Syntree_node *node)
                 switch (node->info.token) {
                     case ASSIGN:
                         {
-                            get_pos(node->child[1], FROM);
-                            fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "%s\n", postmp);
+                            if (node->ntype.kind != T_DOUBLE) {
+                                get_pos(node->child[1], FROM);
+                                fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
+                                get_pos(node->child[0], TO);
+                                fprintf(fasm, "%s\n", postmp);
+                            } else {
+                                get_pos(node->child[1], FROM);
+                                fprintf(fasm, "\tfldl\t%s\n", postmp);
+                                get_pos(node->child[0], TO);
+                                fprintf(fasm, "\tfstpl\t%s\n", postmp);
+                            }
                             break;
                         }
                 }

@@ -517,7 +517,8 @@ expr		: expr INC			{
 							$$ = syntree_new_node(0, K_EXPR, T_CHAR, (void *)K_CHAR, (void *)lastval, 0, 0, 0, 0);
 						}
 		| FLOATPNT			{
-							$$ = syntree_new_node(0, K_EXPR, T_DOUBLE, (void *)K_DOUBLE, NULL, 0, 0, 0, 0);
+							dbl[dbl_cnt] = lastdval;
+							$$ = syntree_new_node(0, K_EXPR, T_DOUBLE, (void *)K_DOUBLE, (void *)dbl_cnt++, 0, 0, 0, 0);
 						}
 		| INTEGER			{
 							$$ = syntree_new_node(0, K_EXPR, T_INT, (void *)K_INT, (void *)lastval, 0, 0, 0, 0);

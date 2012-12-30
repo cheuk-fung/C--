@@ -22,7 +22,7 @@ union Information {
     char c;
     int strno;
     int val;
-    double dval;
+    int dblno;
     struct Stab *symbol;
 };
 

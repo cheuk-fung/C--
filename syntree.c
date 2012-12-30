@@ -205,11 +205,7 @@ struct Syntree_node *syntree_new_node(int child_count, enum Node_kind nkind, enu
         node->ntype.struct_sym = ((struct Stab *)info)->type->struct_sym;
     }
     node->se = (union SE_kind)se;
-    if (nkind == K_DOUBLE && ntype == T_DOUBLE) {
-        node->info.dval = lastdval;
-    } else {
-        node->info = (union Information)info;
-    }
+    node->info = (union Information)info;
 
     if (child0) node->child[0] = child0;
     if (child1) node->child[1] = child1;
@@ -373,7 +369,7 @@ int syntree_translate(struct Syntree_node *root)
                         print_child(node);
                         break;
                     case K_DOUBLE:
-                        fprintf(fmsg, "Float point constant:\t%lf\t", node->info.dval);
+                        fprintf(fmsg, "Float point constant:\t%f\t", dbl[node->info.dblno]);
                         print_child(node);
                         break;
                     case K_SYM:

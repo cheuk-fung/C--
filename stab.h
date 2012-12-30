@@ -55,6 +55,9 @@ struct Stab *sym_stack[MAX_STACK_SIZE];
 extern int str_cnt;
 char *strings[MAX_STACK_SIZE];
 
+extern int dbl_cnt;
+double dbl[MAX_STACK_SIZE];
+
 struct Stab *stab_new(const char *, int);
 struct Arysize_entry *arysize_new(size_t);
 struct Param_entry *param_new(struct Stab *);
