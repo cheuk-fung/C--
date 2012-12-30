@@ -70,6 +70,7 @@ static void syntree_type_check(struct Syntree_node *node)
                                 fprintf(stderr, "Bad type at line: %d.\n", node->lineno);
                                 exit(1);
                             }
+                            node->ntype = node->child[0]->ntype;
                             break;
                         case DOT:
                             if (node->child[0]->ntype.kind != T_STRUCT || node->child[1]->se.expr != K_SYM) {

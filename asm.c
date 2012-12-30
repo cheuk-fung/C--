@@ -14,6 +14,7 @@
 
 FILE *fasm;
 char postmp[1024];
+char strtmp[1024];
 char eptmp[32];
 
 static void asm_global_var(struct Trie_node *node)
@@ -246,23 +247,79 @@ void translate_expression(struct Syntree_node *node)
         case K_OPR:
             {
                 switch (node->info.token) {
-                    case ASSIGN:
-                        if (node->ntype.kind != T_DOUBLE) {
-                            get_pos(node->child[1], FROM);
-                            fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
+                    case INC:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            fprintf(fasm, "\tincb\t%s\n", postmp);
+                            sprintf(strtmp, "%s", postmp);
                             get_pos(node->child[0], TO);
-                            fprintf(fasm, "%s\n", postmp);
-                        } else {
-                            get_pos(node->child[1], FROM);
-                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", strtmp, postmp);
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            fprintf(fasm, "\tincl\t%s\n", postmp);
+                            sprintf(strtmp, "%s", postmp);
                             get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tfstpl\t%s\n", postmp);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", strtmp, postmp);
                         }
                         break;
-                    case REFR:
-                        get_pos(node->child[0], TO);
-                        fprintf(fasm, "\tleal\t%s, %%edx\n", postmp);
-                        fprintf(fasm, "\tmovl\t%%edx, %s\n", get_esp(node->tmppos));
+                    case DEC:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            fprintf(fasm, "\tdecb\t%s\n", postmp);
+                            sprintf(strtmp, "%s", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", strtmp, postmp);
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            fprintf(fasm, "\tdecl\t%s\n", postmp);
+                            sprintf(strtmp, "%s", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", strtmp, postmp);
+                        }
+                        break;
+                    case DOT:
+                        /* TODO */
+                        break;
+                    case MEMBER:
+                        /* TODO */
+                        break;
+                    case PINC:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tincb\t%s\n", postmp);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            sprintf(strtmp, "%s", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", strtmp, postmp);
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tincl\t%s\n", postmp);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            sprintf(strtmp, "%s", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", strtmp, postmp);
+                        }
+                        break;
+                    case PDEC:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tdecb\t%s\n", postmp);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            sprintf(strtmp, "%s", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", strtmp, postmp);
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], FROM);
+                            fprintf(fasm, "\tdecl\t%s\n", postmp);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", postmp, get_esp(node->tmppos));
+                            sprintf(strtmp, "%s", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", strtmp, postmp);
+                        }
                         break;
                     case UPLUS:
                         if (node->ntype.kind != T_DOUBLE) {
@@ -298,53 +355,33 @@ void translate_expression(struct Syntree_node *node)
                             fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
                         }
                         break;
-                    case PLUS:
+                    case LNOT:
+                        /* TODO */
+                    case NOT:
                         if (node->ntype.kind == T_CHAR) {
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
-                            get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tmovzbl\t%s, %%edx\n", postmp);
-                            fprintf(fasm, "\taddl\t%%edx, %%eax\n");
-                            fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
+                            get_pos(node->child[0], FROM);
+                            if (postmp[0] != '%') {
+                                fprintf(fasm, "\tmovb\t%s, %%al\n", postmp);
+                                sprintf(postmp, "%%al");
+                            }
+                            fprintf(fasm, "\tnotb\t%s\n", postmp);
+                            fprintf(fasm, "\tmovb\t%s, %s\n", postmp, get_esp(node->tmppos));
                         } else if (node->ntype.kind == T_INT) {
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
-                            get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
-                            fprintf(fasm, "\taddl\t%%edx, %%eax\n");
-                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
-                        } else if (node->ntype.kind == T_DOUBLE) {
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tfldl\t%s\n", postmp);
-                            get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tfldl\t%s\n", postmp);
-                            fprintf(fasm, "\tfaddp\t%%st, %%st(1)\n");
-                            fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
+                            get_pos(node->child[0], FROM);
+                            if (postmp[0] != '%') {
+                                fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                                sprintf(postmp, "%%eax");
+                            }
+                            fprintf(fasm, "\tnotl\t%s\n", postmp);
+                            fprintf(fasm, "\tmovl\t%s, %s\n", postmp, get_esp(node->tmppos));
                         }
                         break;
-                    case MINUS:
-                        if (node->ntype.kind == T_CHAR) {
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
-                            get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tmovzbl\t%s, %%edx\n", postmp);
-                            fprintf(fasm, "\tsubl\t%%edx, %%eax\n");
-                            fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
-                        } else if (node->ntype.kind == T_INT) {
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
-                            get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
-                            fprintf(fasm, "\tsubl\t%%edx, %%eax\n");
-                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
-                        } else if (node->ntype.kind == T_DOUBLE) {
-                            get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tfldl\t%s\n", postmp);
-                            get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tfldl\t%s\n", postmp);
-                            fprintf(fasm, "\tfsubrp\t%%st, %%st(1)\n");
-                            fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
-                        }
+                    case PTR:
+                        /* TODO */
+                    case REFR:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tleal\t%s, %%edx\n", postmp);
+                        fprintf(fasm, "\tmovl\t%%edx, %s\n", get_esp(node->tmppos));
                         break;
                     case MULTIPLY:
                         if (node->ntype.kind == T_CHAR) {
@@ -417,6 +454,67 @@ void translate_expression(struct Syntree_node *node)
                             fprintf(fasm, "\tsarl\t$31, %%edx\n");
                             fprintf(fasm, "\tidivl\t%%ecx\n");
                             fprintf(fasm, "\tmovl\t%%edx, %s\n", get_esp(node->tmppos));
+                        }
+                        break;
+                    case PLUS:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%edx\n", postmp);
+                            fprintf(fasm, "\taddl\t%%edx, %%eax\n");
+                            fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
+                            fprintf(fasm, "\taddl\t%%edx, %%eax\n");
+                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_DOUBLE) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            fprintf(fasm, "\tfaddp\t%%st, %%st(1)\n");
+                            fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
+                        }
+                        break;
+                    case MINUS:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%edx\n", postmp);
+                            fprintf(fasm, "\tsubl\t%%edx, %%eax\n");
+                            fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
+                            fprintf(fasm, "\tsubl\t%%edx, %%eax\n");
+                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_DOUBLE) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            fprintf(fasm, "\tfsubrp\t%%st, %%st(1)\n");
+                            fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
+                        }
+                        break;
+                    case ASSIGN:
+                        if (node->ntype.kind != T_DOUBLE) {
+                            get_pos(node->child[1], FROM);
+                            fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "%s\n", postmp);
+                        } else {
+                            get_pos(node->child[1], FROM);
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tfstpl\t%s\n", postmp);
                         }
                         break;
                 }
