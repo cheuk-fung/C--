@@ -254,6 +254,29 @@ void translate_statement(struct Syntree_node *node)
         case K_DO:
             /* TODO */
         case K_FOR:
+            {
+                int judge_label = label_cnt++;
+                int body_label = label_cnt++;
+                asm_translate(node->child[0]);
+                fprintf(fasm, "\tjmp\t.L%d\n", judge_label);
+                fprintf(fasm, ".L%d:\n", body_label);
+                asm_translate(node->child[3]);
+                asm_translate(node->child[2]);
+                fprintf(fasm, ".L%d:\n", judge_label);
+                if (node->child[1]) {
+                    asm_translate(node->child[1]);
+                    get_pos(node->child[1], TO);
+                    if (postmp[0] == '$') {
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        sprintf(postmp, "%%eax");
+                    }
+                    fprintf(fasm, "\tcmpl\t$0, %s\n", postmp);
+                    fprintf(fasm, "\tjnz\t.L%d\n", body_label);
+                } else {
+                    fprintf(fasm, "\tjmp\t.L%d\n", body_label);
+                }
+                break;
+            }
         case K_SWITCH:
             /* TODO */
         case K_GOTO:
