@@ -320,7 +320,8 @@ params		: params COMMA param		{
 		;
 
 param		: type identifier		{
-							STACK_POP(type_stack, type_top);
+							struct Type_info *ti = STACK_POP(type_stack, type_top);
+							curr_env->param_size += type_size(ti);
 						}
 		;
 

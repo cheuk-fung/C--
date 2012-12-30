@@ -72,6 +72,15 @@ static char *type_register(enum Type_kind kind)
     return 0;
 }
 
+static void print_esp(size_t offset)
+{
+    if (offset) {
+        fprintf(fasm, "%zd(%%esp)\n", offset);
+    } else {
+        fprintf(fasm, "(%%esp)\n");
+    }
+}
+
 static void mov_to_esp(struct Syntree_node *sn, size_t offset)
 {
 #ifdef NGDEBUG
@@ -82,18 +91,13 @@ static void mov_to_esp(struct Syntree_node *sn, size_t offset)
             fprintf(fasm, "\t%s\t$%d, ", mov_action(sn->ntype.kind), sn->info.c);
             break;
         case K_STR:
-            fprintf(fasm, "\tleal\t.str%d, %%eax\n", sn->info.strno);
-            fprintf(fasm, "\tmovl\t%%eax, ");
+            fprintf(fasm, "\tmovl\t$.str%d, ", sn->info.strno);
             break;
         case K_INT:
             fprintf(fasm, "\tmovl\t$%d, ", sn->info.val);
             break;
     }
-    if (offset) {
-        fprintf(fasm, "%zd(%%esp)\n", offset);
-    } else {
-        fprintf(fasm, "(%%esp)\n");
-    }
+    print_esp(offset);
 }
 
 void asm_translate(struct Syntree_node *root)
@@ -122,9 +126,14 @@ void translate_function(struct Syntree_node *node)
     fprintf(fasm, "%s:\n", node->info.symbol->name);
     fprintf(fasm, "\tpushl\t%%ebp\n");
     fprintf(fasm, "\tmovl\t%%esp, %%ebp\n");
-    fprintf(fasm, "\tsubl\t$%zd, %%esp\n", env_size(node->child[0]->env));
+    size_t es = env_size(node->child[0]->env);
+    if (es) {
+        fprintf(fasm, "\tsubl\t$%zd, %%esp\n", env_size(node->child[0]->env));
+    }
     asm_translate(node->child[0]);
-    fprintf(fasm, "\taddl\t$%zd, %%esp\n", env_size(node->child[0]->env));
+    if (es) {
+        fprintf(fasm, "\taddl\t$%zd, %%esp\n", env_size(node->child[0]->env));
+    }
     fprintf(fasm, "\tpopl\t%%ebp\n");
     fprintf(fasm, "\tret\n");
 }
@@ -144,14 +153,20 @@ void translate_expression(struct Syntree_node *node)
                 asm_translate(node->child[0]);
                 size_t offset = 0;
                 struct Syntree_node *sn = node->child[0];
-                while (sn->se.expr == K_OPR && sn->info.token == COMMA) {
-                    mov_to_esp(sn->child[0], offset);
-                    offset += type_size(&sn->child[0]->ntype);
-                    sn = sn->child[1];
+                if (sn) {
+                    while (sn->se.expr == K_OPR && sn->info.token == COMMA) {
+                        mov_to_esp(sn->child[0], offset);
+                        offset += type_size(&sn->child[0]->ntype);
+                        sn = sn->child[1];
+                    }
+                    mov_to_esp(sn, offset);
+                    offset += type_size(&sn->ntype);
                 }
-                mov_to_esp(sn, offset);
-                offset += type_size(&sn->ntype);
                 fprintf(fasm, "\tcalll\t%s\n", node->info.symbol->name);
+                if (node->ntype.kind <= T_DOUBLE) {
+                    fprintf(fasm, "\tmovl\t%%eax, ");
+                    print_esp(node->tmppos);
+                }
                 break;
             }
         default:

@@ -21,10 +21,12 @@ struct Env *env_new(struct Env *prev)
         e->var_size = 0;
         e->tmp_size = 0;
         e->call_size = 0;
+        e->param_size = 0;
     } else {
         e->var_size = prev->var_size;
         e->tmp_size = prev->tmp_size;
         e->call_size = prev->call_size;
+        e->param_size = prev->param_size;
     }
 
     return e;
@@ -58,5 +60,5 @@ void load_std_func(char *func, enum Type_kind type)
 
 size_t env_size(struct Env *e)
 {
-    return e->var_size + e->tmp_size + e->call_size;
+    return e->var_size + e->tmp_size + e->call_size - e->param_size;
 }

@@ -12,6 +12,7 @@ struct Env {
     size_t var_size;
     size_t tmp_size;
     size_t call_size;
+    size_t param_size;
 };
 
 struct Env *global_env;
