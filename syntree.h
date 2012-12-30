@@ -8,7 +8,7 @@
 
 enum Node_kind { K_FUNC, K_STRUCT, K_DEF, K_STMT, K_EXPR };
 enum Stmt_kind { K_IF, K_IFELSE, K_WHILE, K_DO, K_FOR, K_SWITCH, K_GOTO, K_RET };
-enum Expr_kind { K_CHAR, K_STR, K_INT, K_DOUBLE, K_OPR, K_SYM, K_ARY, K_CALL };
+enum Expr_kind { K_CHAR, K_STR, K_INT, K_DOUBLE, K_SYM, K_ARY, K_OPR, K_CALL };
 
 union SE_kind {
     void *nothing;
