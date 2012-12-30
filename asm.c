@@ -375,8 +375,8 @@ void translate_expression(struct Syntree_node *node)
                             }
                             fprintf(fasm, "\tcmpl\t$0, %s\n", postmp);
                             fprintf(fasm, "\tsete\t%%al\n");
-                            fprintf(fasm, "\tmovzbl\t%%al, %%edx\n");
-                            fprintf(fasm, "\tmovl\t%%edx, %s\n", get_esp(node->tmppos));
+                            fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                            fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
                         }
                         break;
                     case NOT:
@@ -561,12 +561,59 @@ void translate_expression(struct Syntree_node *node)
                         }
                         break;
                     case LT:
-                        /* TODO */
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        get_pos(node->child[1], TO);
+                        fprintf(fasm, "\tcmpl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\tsetl\t%%al\n");
+                        fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        break;
                     case LE:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        get_pos(node->child[1], TO);
+                        fprintf(fasm, "\tcmpl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\tsetle\t%%al\n");
+                        fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        break;
                     case GT:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        get_pos(node->child[1], TO);
+                        fprintf(fasm, "\tcmpl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\tsetg\t%%al\n");
+                        fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        break;
                     case GE:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        get_pos(node->child[1], TO);
+                        fprintf(fasm, "\tcmpl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\tsetge\t%%al\n");
+                        fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        break;
                     case EQ:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        get_pos(node->child[1], TO);
+                        fprintf(fasm, "\tcmpl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\tsete\t%%al\n");
+                        fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        break;
                     case NE:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        get_pos(node->child[1], TO);
+                        fprintf(fasm, "\tcmpl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\tsetne\t%%al\n");
+                        fprintf(fasm, "\tmovzbl\t%%al, %%eax\n");
+                        fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
+                        break;
                     case AND:
                         if (node->ntype.kind == T_CHAR) {
                             get_pos(node->child[0], TO);
