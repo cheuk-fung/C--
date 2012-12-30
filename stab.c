@@ -48,6 +48,7 @@ size_t type_size(struct Type_info *ti)
 {
     switch (ti->kind) {
         case T_CHAR: return CHAR_SIZE;
+        case T_STR: return PTR_SIZE;
         case T_INT: return INT_SIZE;
         case T_FLOAT: return FLOAT_SIZE;
         case T_DOUBLE: return DOUBLE_SIZE;

@@ -148,7 +148,13 @@ static int proc(int token)
         case STRING:
             return STRING;
         case CHARACTER:
-            lastval = yytext[1];	/* TODO: ESC support */
+            if (yytext[1] == '\\') {
+                switch (yytext[2]) {	/* TODO: ESC support */
+                    case 'n': lastval = '\n'; break;
+                }
+            } else {
+                lastval = yytext[1];
+            }
             return CHARACTER;
         case FLOATPNT:
             sscanf(yytext, "%lf", &lastdval);

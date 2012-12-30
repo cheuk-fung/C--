@@ -1,3 +1,7 @@
+#ifdef NGDEBUG
+#include <assert.h>
+#endif
+
 #include <stdio.h>
 #include "asm.h"
 #include "global.h"
@@ -45,17 +49,51 @@ void asm_head()
 static void translate_function(struct Syntree_node *);
 static void translate_statement(struct Syntree_node *);
 static void translate_expression(struct Syntree_node *);
+
 static char *mov_action(enum Type_kind kind)
 {
-    if (kind == T_CHAR) return "movb";
-    if (kind == T_INT) return "movl";
-    return "kidding";
+    switch (kind) {
+        case T_CHAR: return "movb";
+        case T_INT: return "movl";
+        case T_STR: return "leal";
+        default: return "kidding";
+    }
+    return 0;
 }
+
 static char *type_register(enum Type_kind kind)
 {
-    if (kind == T_CHAR) return "%cl";
-    if (kind == T_INT) return "%ecx";
-    return "kidding";
+    switch (kind) {
+        case T_CHAR: return "%cl";
+        case T_INT: return "%ecx";
+        case T_STR: return "%ecx";
+        default: return "kidding";
+    }
+    return 0;
+}
+
+static void mov_to_esp(struct Syntree_node *sn, size_t offset)
+{
+#ifdef NGDEBUG
+    assert(sn->nkind == K_EXPR);
+#endif
+    switch (sn->se.expr) {
+        case K_CHAR:
+            fprintf(fasm, "\t%s\t$%d, ", mov_action(sn->ntype.kind), sn->info.c);
+            break;
+        case K_STR:
+            fprintf(fasm, "\tleal\t.str%d, %%eax\n", sn->info.strno);
+            fprintf(fasm, "\tmovl\t%%eax, ");
+            break;
+        case K_INT:
+            fprintf(fasm, "\tmovl\t$%d, ", sn->info.val);
+            break;
+    }
+    if (offset) {
+        fprintf(fasm, "%zd(%%esp)\n", offset);
+    } else {
+        fprintf(fasm, "(%%esp)\n");
+    }
 }
 
 void asm_translate(struct Syntree_node *root)
@@ -101,26 +139,18 @@ void translate_expression(struct Syntree_node *node)
 {
     node->tmppos += node->env->call_size;
     switch (node->se.expr) {
-        case K_CHAR:
-            if (node->ntype.kind == T_CHAR) {
-                fprintf(fasm, "\t%s\t$%d, %zd(%%esp)\n", mov_action(node->ntype.kind), node->info.c, node->tmppos);
-            } else if (node->ntype.kind == T_INT) {
-                fprintf(fasm, "\t%s\t$%d, %zd(%%esp)\n", mov_action(node->ntype.kind), node->info.c, node->tmppos);
-            }
-            break;
         case K_CALL:
             {
                 asm_translate(node->child[0]);
                 size_t offset = 0;
                 struct Syntree_node *sn = node->child[0];
                 while (sn->se.expr == K_OPR && sn->info.token == COMMA) {
-                    fprintf(fasm, "\t%s\t%zd(%%esp), %s\n", mov_action(sn->ntype.kind), sn->tmppos, type_register(sn->ntype.kind));
-                    fprintf(fasm, "\t%s\t%s, %zd(%%esp)\n", mov_action(sn->ntype.kind), type_register(sn->ntype.kind), offset);
-                    offset += type_size(&sn->ntype);
+                    mov_to_esp(sn->child[0], offset);
+                    offset += type_size(&sn->child[0]->ntype);
                     sn = sn->child[1];
                 }
-                fprintf(fasm, "\t%s\t%zd(%%esp), %s\n", mov_action(sn->ntype.kind), sn->tmppos, type_register(sn->ntype.kind));
-                fprintf(fasm, "\t%s\t%s, %zd(%%esp)\n", mov_action(sn->ntype.kind), type_register(sn->ntype.kind), offset);
+                mov_to_esp(sn, offset);
+                offset += type_size(&sn->ntype);
                 fprintf(fasm, "\tcalll\t%s\n", node->info.symbol->name);
                 break;
             }
