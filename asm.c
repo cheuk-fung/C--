@@ -213,6 +213,24 @@ void translate_statement(struct Syntree_node *node)
                 break;
             }
         case K_IFELSE:
+            {
+                asm_translate(node->child[0]);
+                get_pos(node->child[0], TO);
+                if (postmp[0] == '$') {
+                    fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                    sprintf(postmp, "%%eax");
+                }
+                fprintf(fasm, "\tcmpl\t$0, %s\n", postmp);
+                int else_label = label_cnt++;
+                int next_label = label_cnt++;
+                fprintf(fasm, "\tjz\t.L%d\n", else_label);
+                asm_translate(node->child[1]);
+                fprintf(fasm, "\tjmp\t.L%d\n", next_label);
+                fprintf(fasm, ".L%d:\n", else_label);
+                asm_translate(node->child[2]);
+                fprintf(fasm, ".L%d:\n", next_label);
+                break;
+            }
         case K_WHILE:
         case K_DO:
             /* TODO */
