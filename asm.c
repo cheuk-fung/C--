@@ -196,6 +196,26 @@ void translate_function(struct Syntree_node *node)
 void translate_statement(struct Syntree_node *node)
 {
     switch (node->se.stmt) {
+        case K_IF:
+        case K_IFELSE:
+        case K_WHILE:
+        case K_DO:
+            /* TODO */
+        case K_FOR:
+        case K_SWITCH:
+            /* TODO */
+        case K_GOTO:
+            /* TODO */
+        case K_RET:
+            if (node->child_count) {
+                asm_translate(node->child[0]);
+                get_pos(node->child[0], TO);
+                if (node->info.symbol->type->kind == T_CHAR) {
+                    fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
+                } else if (node->info.symbol->type->kind == T_INT) {
+                    fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                }
+            }
     }
 }
 
@@ -246,6 +266,7 @@ void translate_expression(struct Syntree_node *node)
                 break;
             }
         case K_ARY:
+            /* TODO */
         case K_OPR:
             {
                 switch (node->info.token) {
