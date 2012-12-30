@@ -247,24 +247,25 @@ void translate_expression(struct Syntree_node *node)
             {
                 switch (node->info.token) {
                     case ASSIGN:
-                        {
-                            if (node->ntype.kind != T_DOUBLE) {
-                                get_pos(node->child[1], FROM);
-                                fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
-                                get_pos(node->child[0], TO);
-                                fprintf(fasm, "%s\n", postmp);
-                            } else {
-                                get_pos(node->child[1], FROM);
-                                fprintf(fasm, "\tfldl\t%s\n", postmp);
-                                get_pos(node->child[0], TO);
-                                fprintf(fasm, "\tfstpl\t%s\n", postmp);
-                            }
-                            break;
+                        if (node->ntype.kind != T_DOUBLE) {
+                            get_pos(node->child[1], FROM);
+                            fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "%s\n", postmp);
+                        } else {
+                            get_pos(node->child[1], FROM);
+                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tfstpl\t%s\n", postmp);
                         }
+                        break;
+                    case REFR:
+                        get_pos(node->child[0], TO);
+                        fprintf(fasm, "\tleal\t%s, %%edx\n", postmp);
+                        fprintf(fasm, "\tmovl\t%%edx, %s\n", get_esp(node->tmppos));
+                        break;
                 }
             }
-        default:
-            break;
     }
 }
 
