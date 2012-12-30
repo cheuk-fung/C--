@@ -364,6 +364,27 @@ void translate_expression(struct Syntree_node *node)
                             fprintf(fasm, "\tfstpl\t%s\n", get_esp(node->tmppos));
                         }
                         break;
+                    case MOD:
+                        if (node->ntype.kind == T_CHAR) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovzbl\t%s, %%ecx\n", postmp);
+                            fprintf(fasm, "\tmovl\t%%eax, %%edx\n");
+                            fprintf(fasm, "\tsarl\t$31, %%edx\n");
+                            fprintf(fasm, "\tidivl\t%%ecx\n");
+                            fprintf(fasm, "\tmovb\t%%dl, %s\n", get_esp(node->tmppos));
+                        } else if (node->ntype.kind == T_INT) {
+                            get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            get_pos(node->child[1], TO);
+                            fprintf(fasm, "\tmovl\t%s, %%ecx\n", postmp);
+                            fprintf(fasm, "\tmovl\t%%eax, %%edx\n");
+                            fprintf(fasm, "\tsarl\t$31, %%edx\n");
+                            fprintf(fasm, "\tidivl\t%%ecx\n");
+                            fprintf(fasm, "\tmovl\t%%edx, %s\n", get_esp(node->tmppos));
+                        }
+                        break;
                 }
             }
     }
