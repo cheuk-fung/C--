@@ -13,6 +13,7 @@
 #define FROM	1
 
 FILE *fasm;
+struct Env *curr_func_env;
 char postmp[1024];
 char strtmp[1024];
 char eptmp[32];
@@ -125,10 +126,10 @@ static void get_pos(struct Syntree_node *sn, int dir)
                 int offset = sn->info.symbol->offset;
                 if (offset == -1) {
                     sprintf(eptmp, "%s", sn->info.symbol->name);
-                } else if (offset < sn->env->param_size) {
+                } else if (offset < curr_func_env->param_size) {
                     get_ebp(offset);
                 } else {
-                    get_esp(offset + sn->env->tmp_size + sn->env->call_size - sn->env->param_size);
+                    get_esp(offset + curr_func_env->tmp_size + curr_func_env->call_size - curr_func_env->param_size);
                 }
                 if (dir == TO || sn->ntype.kind == T_DOUBLE) {
                     sprintf(postmp, "%s", eptmp);
@@ -176,19 +177,20 @@ void asm_translate(struct Syntree_node *root)
 
 void translate_function(struct Syntree_node *node)
 {
+    curr_func_env = node->child[0]->env;
     fprintf(fasm, "\n");
     fprintf(fasm, "\t.globl\t%s\n", node->info.symbol->name);
     fprintf(fasm, "%s:\n", node->info.symbol->name);
     fprintf(fasm, "\tpushl\t%%ebp\n");
     fprintf(fasm, "\tmovl\t%%esp, %%ebp\n");
-    size_t es = env_size(node->child[0]->env);
+    size_t es = env_size(curr_func_env);
     if (es) {
-        fprintf(fasm, "\tsubl\t$%zd, %%esp\n", env_size(node->child[0]->env));
+        fprintf(fasm, "\tsubl\t$%zd, %%esp\n", es);
     }
     asm_translate(node->child[0]);
     fprintf(fasm, ".ret%d:\n", node->info.symbol->funcno);
     if (es) {
-        fprintf(fasm, "\taddl\t$%zd, %%esp\n", env_size(node->child[0]->env));
+        fprintf(fasm, "\taddl\t$%zd, %%esp\n", es);
     }
     fprintf(fasm, "\tpopl\t%%ebp\n");
     fprintf(fasm, "\tret\n");
@@ -232,6 +234,23 @@ void translate_statement(struct Syntree_node *node)
                 break;
             }
         case K_WHILE:
+            {
+                int start_label = label_cnt++;
+                int next_label = label_cnt++;
+                fprintf(fasm, ".L%d:\n", start_label);
+                asm_translate(node->child[0]);
+                get_pos(node->child[0], TO);
+                if (postmp[0] == '$') {
+                    fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                    sprintf(postmp, "%%eax");
+                }
+                fprintf(fasm, "\tcmpl\t$0, %s\n", postmp);
+                fprintf(fasm, "\tjz\t.L%d\n", next_label);
+                asm_translate(node->child[1]);
+                fprintf(fasm, "\tjmp\t.L%d\n", start_label);
+                fprintf(fasm, ".L%d:\n", next_label);
+                break;
+            }
         case K_DO:
             /* TODO */
         case K_FOR:
@@ -259,7 +278,7 @@ void translate_expression(struct Syntree_node *node)
     for (i = 0; i < node->child_count; i++) {
         asm_translate(node->child[i]);
     }
-    node->tmppos += node->env->call_size;
+    node->tmppos += curr_func_env->call_size;
     switch (node->se.expr) {
         case K_CALL:
             {
