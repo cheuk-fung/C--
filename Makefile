@@ -15,7 +15,7 @@ parser.h parser.c: parser.y
 parser.o: global.h lexer.h env.h syntree.h stab.h asm.h
 lexer.o: global.h parser.h env.h stab.h
 syntree.o: syntree.h global.h lexer.h
-env.o: env.h trie.h
+env.o: env.h trie.h stab.h
 stab.o: stab.h env.h
 trie.o: trie.h stab.h
 asm.o: asm.h syntree.h

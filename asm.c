@@ -23,7 +23,7 @@ static void asm_global_var(struct Trie_node *node)
 {
     if (node->symbol) {
         struct Stab *symbol = node->symbol;
-        if (!symbol->isfunc) {
+        if (symbol->funcno < 0) {
             if (symbol->type->kind == T_STRUCT) {
                 /* TODO */
             } else if (symbol->arysize_cnt) {
@@ -186,6 +186,7 @@ void translate_function(struct Syntree_node *node)
         fprintf(fasm, "\tsubl\t$%zd, %%esp\n", env_size(node->child[0]->env));
     }
     asm_translate(node->child[0]);
+    fprintf(fasm, ".ret%d:\n", node->info.symbol->funcno);
     if (es) {
         fprintf(fasm, "\taddl\t$%zd, %%esp\n", env_size(node->child[0]->env));
     }
@@ -197,6 +198,20 @@ void translate_statement(struct Syntree_node *node)
 {
     switch (node->se.stmt) {
         case K_IF:
+            {
+                asm_translate(node->child[0]);
+                get_pos(node->child[0], TO);
+                if (postmp[0] == '$') {
+                    fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                    sprintf(postmp, "%%eax");
+                }
+                fprintf(fasm, "\tcmpl\t$0, %s\n", postmp);
+                int next_label = label_cnt++;
+                fprintf(fasm, "\tjz\t.L%d\n", next_label);
+                asm_translate(node->child[1]);
+                fprintf(fasm, ".L%d:\n", next_label);
+                break;
+            }
         case K_IFELSE:
         case K_WHILE:
         case K_DO:
@@ -216,6 +231,7 @@ void translate_statement(struct Syntree_node *node)
                     fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
                 }
             }
+            fprintf(fasm, "\tjmp\t.ret%d\n", node->info.symbol->funcno);
     }
 }
 

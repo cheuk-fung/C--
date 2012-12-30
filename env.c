@@ -54,7 +54,7 @@ struct Stab *env_lookup(struct Env *e, const char *name)
 void load_std_func(char *func, enum Type_kind type)
 {
     struct Stab *symbol = env_insert(global_env, func, -1);
-    symbol->isfunc = TRUE;
+    symbol->funcno = 0x3f3f3f3f;
     symbol->type = type_new(type, NULL);
 }
 

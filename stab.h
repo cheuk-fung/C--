@@ -31,7 +31,7 @@ struct Stab {
     size_t size;
     int lineno; 		// declaration line
     struct Type_info *type;
-    BOOL isfunc;
+    int funcno;
     size_t param_size;
     int ptr_cnt;
     union {
@@ -45,6 +45,8 @@ struct Stab {
         struct Env *member_env;
     };
 };
+
+extern int func_cnt;
 
 extern int type_top;
 struct Type_info *type_stack[MAX_STACK_SIZE];

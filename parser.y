@@ -277,7 +277,7 @@ var_def_list	: var_defs			{ $$ = $1; }
 
 func_def	: type id_noary env_enter LPAREN param_list RPAREN block env_leave	{
 							struct Stab *symbol = STACK_POP(sym_stack, sym_top);
-							symbol->isfunc = TRUE;
+							symbol->funcno = func_cnt++;
 							symbol->type = STACK_POP(type_stack, type_top);
 							if (symbol->size == 0) {
 								symbol->size = type_size(symbol->type);

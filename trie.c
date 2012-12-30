@@ -49,7 +49,7 @@ size_t trie_size(struct Trie_node *root)
     size_t size = 0;
     if (root->symbol) {
         struct Stab *symbol = root->symbol;
-        if (!symbol->isfunc && symbol->type->kind != T_STRUCT && symbol->arysize_cnt) {
+        if (symbol->funcno > 0 && symbol->type->kind != T_STRUCT && symbol->arysize_cnt) {
             size += symbol->size * symbol->arysize_list->size;
         } else {
             size += symbol->size;

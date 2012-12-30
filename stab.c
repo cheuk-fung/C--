@@ -7,6 +7,7 @@
 #include "stab.h"
 #include "env.h"
 
+int func_cnt = 0;
 int type_top = 0;
 int sym_top = 0;
 int str_cnt = 0;
@@ -18,6 +19,7 @@ struct Stab *stab_new(const char *name, int lineno)
     memset(symbol, 0, sizeof(struct Stab));
     symbol->name = strdup(name);
     symbol->lineno = lineno;
+    symbol->funcno = -1;
     return symbol;
 }
 
