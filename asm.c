@@ -30,7 +30,7 @@ static void asm_global_var(struct Trie_node *node)
                     fprintf(fasm, "\t.comm\t%s,%zd,%zd\n", symbol->name, symbol->size, 4);
                 }
             } else if (symbol->arysize_cnt) {
-                /* TODO */
+                fprintf(fasm, "\t.comm\t%s,%zd,%zd\n", symbol->name, symbol->size * symbol->arysize_list->size, 32);
             } else {
                 fprintf(fasm, "\t.comm\t%s,%zd,%zd\n", symbol->name, symbol->size, symbol->size);
                 symbol->offset = -1;
@@ -142,7 +142,46 @@ static void get_pos(struct Syntree_node *sn, int dir)
                 break;
             }
         case K_ARY:
-            /* TODO */
+            {
+                int arycnt = 0, arysize[16];
+                struct Arysize_entry *ae;
+                for (ae = sn->info.symbol->arysize_list; ae; ae = ae->next) {
+                    arysize[arycnt++] = ae->size;
+                }
+
+                int aryoffset = 1;
+                struct Syntree_node *tmp;
+                fprintf(fasm, "\tsarl\t$31, %%edx\n");
+                for (tmp = sn; tmp->se.expr != K_SYM; tmp = tmp->child[0]) {
+                    asm_translate(tmp->child[1]);
+                    get_pos(tmp->child[1], TO);
+                    if (aryoffset != 1) {
+                        fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                        fprintf(fasm, "\timull\t$%d, %%eax\n", aryoffset);
+                        fprintf(fasm, "\taddl\t%%eax, %%edx\n");
+                    } else {
+                        fprintf(fasm, "\taddl\t%s, %%edx\n", postmp);
+                    }
+                    aryoffset = arysize[--arycnt];
+                }
+
+                int offset = sn->info.symbol->offset;
+                if (offset == -1) {
+                    sprintf(eptmp, "%s(,%%edx,%zd)", sn->info.symbol->name, sn->info.symbol->size);
+                } else if (offset < curr_func_env->param_size) {
+                    sprintf(eptmp, "-%zd(%%ebp,%%edx,%zd)", offset + 8, sn->info.symbol->size);
+                } else {
+                    sprintf(eptmp, "%zd(%%esp,%%edx,%zd)", offset + curr_func_env->tmp_size + curr_func_env->call_size - curr_func_env->param_size, sn->info.symbol->size);
+                }
+
+                if (dir == TO || sn->ntype.kind == T_DOUBLE) {
+                    sprintf(postmp, "%s", eptmp);
+                } else {
+                    fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), eptmp, type_register(sn->ntype.kind));
+                    sprintf(postmp, "%s", type_register(sn->ntype.kind));
+                }
+                break;
+            }
         case K_DOT:
             {
                 int offset = sn->child[0]->info.symbol->offset;
@@ -361,8 +400,6 @@ void translate_expression(struct Syntree_node *node)
                 }
                 break;
             }
-        case K_ARY:
-            /* TODO */
         case K_OPR:
             {
                 switch (node->info.token) {
@@ -826,13 +863,14 @@ void translate_expression(struct Syntree_node *node)
                     case ASSIGN:
                         if (node->ntype.kind != T_DOUBLE) {
                             get_pos(node->child[1], FROM);
-                            fprintf(fasm, "\t%s\t%s, ", mov_action(node->ntype.kind), postmp);
+                            sprintf(strtmp, "%s", postmp);
                             get_pos(node->child[0], TO);
-                            fprintf(fasm, "%s\n", postmp);
+                            fprintf(fasm, "\t%s\t%s, %s\n", mov_action(node->ntype.kind), strtmp, postmp);
                         } else {
                             get_pos(node->child[1], FROM);
-                            fprintf(fasm, "\tfldl\t%s\n", postmp);
+                            sprintf(strtmp, "%s", postmp);
                             get_pos(node->child[0], TO);
+                            fprintf(fasm, "\tfldl\t%s\n", strtmp);
                             fprintf(fasm, "\tfstpl\t%s\n", postmp);
                         }
                         break;
