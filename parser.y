@@ -139,11 +139,12 @@ program		: code				{
 							syntree_translate($1);
 							fclose(fmsg);
 
-							//fasm = fopen("a.asm", "w");
-							fasm = stdout;
+							fasm = fopen("a.out.s", "w");
 							asm_head();
 							asm_translate($1);
 							fclose(fasm);
+
+							system("gcc -m32 -o a.out a.out.s");
 						}
 		/* TODO: error handling */
 		/* TODO: memory free */

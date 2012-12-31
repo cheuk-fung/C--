@@ -5,3 +5,6 @@ lexer.c
 lexer.h
 parser.c
 parser.h
+msg.out
+a.out.s
+a.out
