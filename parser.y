@@ -144,7 +144,7 @@ program		: code				{
 							asm_translate($1);
 							fclose(fasm);
 
-							system("gcc -m32 -o a.out a.out.s");
+							system("clang -m32 -o a.out a.out.s");
 						}
 		/* TODO: error handling */
 		/* TODO: memory free */
