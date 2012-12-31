@@ -21,4 +21,12 @@ trie.o: trie.h stab.h
 asm.o: asm.h syntree.h
 .PHONY: clean
 clean:
-	$(RM) $(PRG) $(OBJS) parser.h parser.c lexer.h lexer.c
+	$(RM) $(PRG) $(OBJS) parser.h parser.c lexer.h lexer.c a.out a.out.s msg.out
+
+show-qsort:
+	./c-- < sample/qsort.c
+	vim a.out.s
+
+run-qsort:
+	./c-- < sample/qsort.c
+	./a.out
