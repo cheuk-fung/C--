@@ -21,7 +21,14 @@
 	global_env = curr_env = env_new(NULL);
 	load_std_func("scanf", T_INT);
 	load_std_func("printf", T_INT);
+	load_std_func("getchar", T_INT);
 	load_std_func("putchar", T_INT);
+	load_std_func("puts", T_INT);
+	load_std_func("malloc", T_INT);
+	load_std_func("free", T_VOID);
+	load_std_func("time", T_INT);
+	load_std_func("srand", T_INT);
+	load_std_func("rand", T_INT);
 }
 
 %token COMMENT
@@ -414,7 +421,7 @@ expr		: expr INC			{
 							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_OPR, (void *)NOT, $2, 0, 0, 0);
 						}
 		| MULTIPLY expr %prec PTR	{
-							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_OPR, (void *)PTR, $2, 0, 0, 0);
+							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_PTR, (void *)PTR, $2, 0, 0, 0);
 						}
 		| AND expr %prec REFR		{
 							$$ = syntree_new_node(1, K_EXPR, T_VOID, (void *)K_OPR, (void *)REFR, $2, 0, 0, 0);

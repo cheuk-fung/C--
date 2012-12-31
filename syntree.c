@@ -136,6 +136,9 @@ static void syntree_type_check(struct Syntree_node *node)
                 }
                 node->ntype = node->child[1]->ntype;
                 break;
+            case K_PTR:
+                node->ntype = node->child[0]->ntype;
+                break; // check when generating codes
             case K_ARY:
                 node->ntype = *(node->info.symbol->type);
                 break; // check when generating codes
@@ -377,6 +380,10 @@ int syntree_translate(struct Syntree_node *root)
                         fprintf(fmsg, "symbol:\t%s\t", node->info.symbol->name);
                         print_child(node);
                         break;
+                    case K_PTR:
+                        fputs("Pointer expression:\n", fmsg);
+                        syntree_translate(node->child[0]);
+                        break;
                     case K_ARY:
                         fprintf(fmsg, "ARY symbol:\t%s\t", node->info.symbol->name);
                         print_child(node);
@@ -438,10 +445,6 @@ int syntree_translate(struct Syntree_node *root)
                                 break;
                             case NOT:
                                 fputs("Arithmetic NOT expression:\n", fmsg);
-                                syntree_translate(node->child[0]);
-                                break;
-                            case PTR:
-                                fputs("Pointer expression:\n", fmsg);
                                 syntree_translate(node->child[0]);
                                 break;
                             case REFR:

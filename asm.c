@@ -141,6 +141,31 @@ static void get_pos(struct Syntree_node *sn, int dir)
                 }
                 break;
             }
+        case K_PTR:
+            {
+                int ptrcnt = 0;
+                struct Syntree_node *tmp;
+                for (tmp = sn; tmp->se.expr == K_PTR; tmp = tmp->child[0]) {
+                    ptrcnt++;
+                }
+                get_pos(tmp, TO);
+                if (tmp->nkind == K_EXPR && tmp->se.expr == K_SYM && tmp->info.symbol->offset == -1) {
+                    fprintf(fasm, "\tleal\t%s, %%edx\n", postmp);
+                } else {
+                    fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
+                }
+                int i;
+                for (i = 1; i < ptrcnt; i++) {
+                    fprintf(fasm, "\tmovl\t(%%edx), %%edx\n");
+                }
+                if (dir == TO) {
+                    sprintf(postmp, "(%%edx)");
+                } else {
+                    fprintf(fasm, "\tmovl\t(%%edx), %%edx\n");
+                    sprintf(postmp, "%%edx");
+                }
+                break;
+            }
         case K_ARY:
             {
                 int arycnt = 0, arysize[16];
@@ -204,11 +229,11 @@ static void get_pos(struct Syntree_node *sn, int dir)
         case K_OPR:
             {
                 get_esp(sn->tmppos);
-                if (sn->ntype.kind != T_DOUBLE) {
+                if (dir == TO || sn->ntype.kind == T_DOUBLE) {
+                    sprintf(postmp, "%s", eptmp);
+                } else if (sn->ntype.kind != T_DOUBLE) {
                     fprintf(fasm, "\t%s\t%s, %s\n", mov_action(sn->ntype.kind), eptmp, type_register(sn->ntype.kind));
                     sprintf(postmp, "%s", type_register(sn->ntype.kind));
-                } else {
-                    sprintf(postmp, "%s", eptmp);
                 }
             }
             break;
@@ -549,8 +574,6 @@ void translate_expression(struct Syntree_node *node)
                             fprintf(fasm, "\tmovl\t%s, %s\n", postmp, get_esp(node->tmppos));
                         }
                         break;
-                    case PTR:
-                        /* TODO */
                     case REFR:
                         get_pos(node->child[0], TO);
                         fprintf(fasm, "\tleal\t%s, %%edx\n", postmp);
@@ -639,9 +662,23 @@ void translate_expression(struct Syntree_node *node)
                             fprintf(fasm, "\tmovb\t%%al, %s\n", get_esp(node->tmppos));
                         } else if (node->ntype.kind == T_INT) {
                             get_pos(node->child[0], TO);
-                            fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            if (node->child[0]->nkind == K_EXPR && node->child[0]->se.expr == K_SYM && node->child[0]->info.symbol->arysize_cnt) {
+                                fprintf(fasm, "\tleal\t%s, %%eax\n", postmp);
+                            } else {
+                                fprintf(fasm, "\tmovl\t%s, %%eax\n", postmp);
+                            }
                             get_pos(node->child[1], TO);
-                            fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
+                            if (node->child[1]->nkind == K_EXPR && node->child[1]->se.expr == K_SYM && node->child[1]->info.symbol->arysize_cnt) {
+                                fprintf(fasm, "\tleal\t%s, %%edx\n", postmp);
+                            } else {
+                                fprintf(fasm, "\tmovl\t%s, %%edx\n", postmp);
+                            }
+                            if (node->child[0]->nkind == K_EXPR && node->child[0]->se.expr == K_SYM && (node->child[0]->info.symbol->ptr_cnt || node->child[0]->info.symbol->arysize_cnt)) {
+                                fprintf(fasm, "\timull\t$4, %%edx\n");
+                            }
+                            if (node->child[1]->nkind == K_EXPR && node->child[1]->se.expr == K_SYM && (node->child[1]->info.symbol->ptr_cnt || node->child[1]->info.symbol->arysize_cnt)) {
+                                fprintf(fasm, "\timull\t$4, %%eax\n");
+                            }
                             fprintf(fasm, "\taddl\t%%edx, %%eax\n");
                             fprintf(fasm, "\tmovl\t%%eax, %s\n", get_esp(node->tmppos));
                         } else if (node->ntype.kind == T_DOUBLE) {
