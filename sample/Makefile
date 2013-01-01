@@ -12,8 +12,8 @@ run-statement:
 	@$(CC) < statement.c
 	@./a.out
 
-run-arithmetic:
-	@$(CC) < arithmetic.c
+run-expression:
+	@$(CC) < expression.c
 	@./a.out
 
 run-fibonacci:

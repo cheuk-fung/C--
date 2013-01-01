@@ -11,8 +11,8 @@ int main()
     scanf("%d", &n);
     if (n) puts("TRUE");
     else puts("FALSE");
-
     putchar(10);
+
     printf("2. while\n");
     printf("Input an integer n and I will print n downto 0: ");
     scanf("%d", &n);
@@ -20,8 +20,8 @@ int main()
         printf("%d ", n--);
     }
     putchar(10);
-
     putchar(10);
+
     printf("3. for\n");
     printf("Input an integer n and I will print 0 to n: ");
     scanf("%d", &n);
