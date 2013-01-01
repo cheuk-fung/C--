@@ -4,7 +4,7 @@ double d;
 
 int main()
 {
-    srand(time(NULL));
+    srand(time(NULL)); // Any header file is needless here to use these functions.
 
     puts("Type and variable support test.");
     puts("Global variables:");
