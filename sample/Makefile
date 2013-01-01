@@ -16,6 +16,10 @@ run-expression:
 	@$(CC) < expression.c
 	@./a.out
 
+run-struct:
+	@$(CC) < struct.c
+	@./a.out
+
 run-fibonacci:
 	@$(CC) < fibonacci.c
 	@./a.out
