@@ -23,9 +23,9 @@ asm.o: asm.h syntree.h
 clean:
 	$(RM) $(PRG) $(OBJS) parser.h parser.c lexer.h lexer.c a.out a.out.s msg.out
 
-show-qsort:
-	./c-- < sample/qsort.c
-	vim a.out.s
+run-fib:
+	./c-- < sample/fibonacci.c
+	./a.out
 
 run-qsort:
 	./c-- < sample/qsort.c
