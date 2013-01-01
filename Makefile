@@ -23,6 +23,14 @@ asm.o: asm.h syntree.h
 clean:
 	$(RM) $(PRG) $(OBJS) parser.h parser.c lexer.h lexer.c a.out a.out.s msg.out
 
+run-hello:
+	./c-- < sample/hello.c
+	./a.out
+
+run-var:
+	./c-- < sample/variable.c
+	./a.out
+
 run-fib:
 	./c-- < sample/fibonacci.c
 	./a.out
