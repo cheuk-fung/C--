@@ -19,22 +19,7 @@ env.o: env.h trie.h stab.h
 stab.o: stab.h env.h
 trie.o: trie.h stab.h
 asm.o: asm.h syntree.h
+
 .PHONY: clean
 clean:
 	$(RM) $(PRG) $(OBJS) parser.h parser.c lexer.h lexer.c a.out a.out.s msg.out
-
-run-hello:
-	./c-- < sample/hello.c
-	./a.out
-
-run-var:
-	./c-- < sample/variable.c
-	./a.out
-
-run-fib:
-	./c-- < sample/fibonacci.c
-	./a.out
-
-run-qsort:
-	./c-- < sample/qsort.c
-	./a.out
