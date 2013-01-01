@@ -1,6 +1,6 @@
 tags
-c--
 *.o
+c--
 lexer.c
 lexer.h
 parser.c
